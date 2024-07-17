@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00e31f98034484094974918c6b4e70bc, type: 3}
+  m_Name: Blue
+  m_EditorClassIdentifier: 
+  cubeType: 1
+  defaultSprite: {fileID: 21300000, guid: f043adc9fd5b84e89ba029af17705701, type: 3}
+  cubeSpriteList:
+  - {fileID: 21300000, guid: f7023d0f6b5d74b149244d10fd4c6149, type: 3}
+  - {fileID: 21300000, guid: 6f4fb650350b44fd88b8e5dfae4b9de7, type: 3}
+  - {fileID: 21300000, guid: 5735f7d9206cb45e0884f6e3fd052b5e, type: 3}

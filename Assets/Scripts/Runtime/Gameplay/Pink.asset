@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00e31f98034484094974918c6b4e70bc, type: 3}
+  m_Name: Pink
+  m_EditorClassIdentifier: 
+  cubeType: 3
+  defaultSprite: {fileID: 21300000, guid: ab5605d68cc9946e6a4ff11a308f5b46, type: 3}
+  cubeSpriteList:
+  - {fileID: 21300000, guid: eea21cd26b1c74b93812a9d564ee0160, type: 3}
+  - {fileID: 21300000, guid: a6392b5b1c8bd428182111251494a651, type: 3}
+  - {fileID: 21300000, guid: f5db11ff7b67f4a12b208387fbcd420c, type: 3}
