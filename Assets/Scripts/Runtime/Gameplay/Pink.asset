@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e31f98034484094974918c6b4e70bc, type: 3}
   m_Name: Pink
   m_EditorClassIdentifier: 
-  cubeType: 3
+  type: 3
   defaultSprite: {fileID: 21300000, guid: ab5605d68cc9946e6a4ff11a308f5b46, type: 3}
   cubeSpriteList:
   - {fileID: 21300000, guid: eea21cd26b1c74b93812a9d564ee0160, type: 3}

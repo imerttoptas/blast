@@ -6,7 +6,7 @@ namespace Runtime.Gameplay
     [CreateAssetMenu(fileName = "New Cube Type", menuName = "Cube Type")]
     public class CubeInfo : ScriptableObject
     {
-        public CubeType cubeType;
+        public CubeType type;
         public Sprite defaultSprite;
         public List<Sprite> cubeSpriteList;
     }
