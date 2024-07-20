@@ -2,24 +2,16 @@ using UnityEngine;
 
 namespace Runtime.Gameplay
 {
-    public class Cube : MonoBehaviour, IClickable
+    public class Cube : MonoBehaviour
     {
         [SerializeField] public SpriteRenderer spriteRenderer;
         public CubeInfo CubeInfo { get; private set; }
-        public int RowIndex { get; private set; }
-        public int ColIndex { get; private set; }
-        public void Init(int rowIndex, int colIndex, Vector2 scale,Vector2 position, Transform parent, CubeInfo cubeInfo)
+        public void Init(CubeInfo cubeInfo)
         {
             IsClickable = true;
-            RowIndex = rowIndex;
-            ColIndex = colIndex;
-            transform.SetParent(parent);
-            transform.localScale = Vector2.one;
-            transform.position = position;
             CubeInfo = cubeInfo;
             spriteRenderer.sprite = cubeInfo.defaultSprite;
         }
-
         public GameObject GameObject => gameObject;
         public bool IsClickable { get; set; }
         public void OnClick()

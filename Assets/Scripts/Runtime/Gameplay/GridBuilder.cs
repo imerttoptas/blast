@@ -5,24 +5,25 @@ namespace Runtime.Gameplay
 {
     public class GridBuilder : MonoBehaviour
     {
-        [SerializeField] private CubeTypeCatalogue cubeTypeCatalogue;
-
+        [SerializeField] private UnitSpawner unitSpawner;
+        [SerializeField] private Cell cellPrefab;
         [SerializeField] private Cube cubePrefab;
         [SerializeField] private int colorCount;
-
-        public void GenerateGrid(Cube[,] cubes, int rowCount, int columnCount)
+        
+        public void GenerateGrid(Cell[,] grid)
         {
-            Vector2 startPoint = Vector2.one / 2f - new Vector2(columnCount / 2f, rowCount / 2f);
+            Vector2 startPoint = Vector2.one / 2f - new Vector2(GridController.instance.ColCount / 2f, GridController.instance.RowCount / 2f);
 
-            for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
+            for (int rowIndex = 0; rowIndex < GridController.instance.RowCount; rowIndex++)
             {
-                for (int colIndex = 0; colIndex < columnCount; colIndex++)
+                for (int colIndex = 0; colIndex < GridController.instance.ColCount; colIndex++)
                 {
-                    Cube createdCube = Instantiate(cubePrefab);
                     Vector2 targetPos = startPoint + new Vector2(colIndex, rowIndex);
-                    createdCube.Init(rowIndex: rowIndex, colIndex: colIndex, Vector2.one, targetPos, transform,
-                        cubeTypeCatalogue.GetRandomCubeTypeFromRange(colorCount - 1));
-                    cubes[rowIndex, colIndex] = createdCube;
+                    Cell createdCell = Instantiate(cellPrefab);
+                    createdCell.Init(parent: transform, targetPos, Vector2.one, rowIndex, colIndex);
+                    grid[rowIndex, colIndex] = createdCell;
+                    
+                    unitSpawner.SpawnCubeAt(rowIndex, colIndex);
                 }
             }
         }

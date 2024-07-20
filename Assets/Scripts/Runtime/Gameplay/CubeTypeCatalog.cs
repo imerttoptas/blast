@@ -7,10 +7,10 @@ namespace Runtime.Gameplay
     public class CubeTypeCatalogue : ScriptableObject
     {
         public List<CubeInfo> cubeInfoList;
-
-        public CubeInfo GetRandomCubeTypeFromRange(int rangeHigh)
+        
+        public CubeInfo GetRandomCubeTypeFromRange()
         {
-            return cubeInfoList[Random.Range(0, rangeHigh)];
+            return cubeInfoList[Random.Range(0, cubeInfoList.Count - 1)];
         }
     }
 }

@@ -122,6 +122,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &492071505
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 492071506}
+  - component: {fileID: 492071507}
+  m_Layer: 0
+  m_Name: UnitSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &492071506
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 492071505}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &492071507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 492071505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be502a5061a8c409f88fd953ebb1470e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cubeTypeCatalogue: {fileID: 11400000, guid: e68374b3a485244f5b8e7b10a64ac631, type: 2}
+  cubePrefab: {fileID: 7380928115427342865, guid: d320ac233500840fe8982efb1f55d6c6, type: 3}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,7 +304,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 509b1aad306bb43f9b988c60aef8d2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeTypeCatalogue: {fileID: 11400000, guid: e68374b3a485244f5b8e7b10a64ac631, type: 2}
+  unitSpawner: {fileID: 492071507}
+  cellPrefab: {fileID: 4515798152927028175, guid: 09131f88ff0384fba96e28882e972b7b, type: 3}
   cubePrefab: {fileID: 7380928115427342865, guid: d320ac233500840fe8982efb1f55d6c6, type: 3}
   colorCount: 6
 --- !u!1 &1202913988
@@ -350,15 +397,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 595003b59b53645b891008e3650a310f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isPersistant: 1
+  unitSpawner: {fileID: 492071507}
+  cubeTypeCatalogue: {fileID: 11400000, guid: e68374b3a485244f5b8e7b10a64ac631, type: 2}
+  cubePrefab: {fileID: 7380928115427342865, guid: d320ac233500840fe8982efb1f55d6c6, type: 3}
   gridBuilder: {fileID: 1091369493}
   inputManager: {fileID: 1202913990}
-  rowCount: 8
-  columnCount: 8
+  rowCount: 4
+  columnCount: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 519420032}
-  - {fileID: 1091369492}
   - {fileID: 1202913989}
+  - {fileID: 1091369492}
   - {fileID: 1547741964}
+  - {fileID: 492071506}

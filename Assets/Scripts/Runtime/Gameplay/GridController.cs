@@ -1,18 +1,23 @@
-using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Runtime.Gameplay
 {
-    public class GridController : MonoBehaviour
+    public class GridController : Singleton<GridController>
     {
+        [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private GridBuilder gridBuilder;
         [SerializeField] private InputManager inputManager;
+
+        private Cell[,] grid = new Cell[12, 12];
+        private List<Cell> tempCellList = new();
         [SerializeField] private int rowCount;
         [SerializeField] private int columnCount;
-        private Cube[,] grid = new Cube[10, 10];
-        private List<Cube> tempCubeList = new();
-        
+        public int RowCount => rowCount;
+        public int ColCount => columnCount;
         private void OnEnable()
         {
             inputManager.OnClickedToClickableObject += TryMakeMove;
@@ -26,97 +31,193 @@ namespace Runtime.Gameplay
         
         void Start()
         {
-            gridBuilder.GenerateGrid(grid, rowCount, columnCount);
+            gridBuilder.GenerateGrid(grid);
         }
         
-        private void TryMakeMove(Cube clickedCube)
+        private void TryMakeMove(Cell cell)
         {
-            if (CheckValidMove(clickedCube))
+            if (CheckValidMove(cell))
             {
-                BlastAdjacentCubes(clickedCube);
+                BlastAdjacentCubes(cell);
             }
         }
         
-        private Cube GetCube(int row, int col)
+        public Cell GetCell(int row, int col)
         {
-            if ((row >= 0 && row < rowCount) && (col >= 0 && col < columnCount))
+            if (row >= 0 && row < rowCount && col >= 0 && col < columnCount)
             {
                 return grid[row, col];
             }
             return null;
         }
     
-        public List<Cube> GetColumn(int colIndex)
+        public List<Cell> GetColumn(int colIndex)
         {
-            tempCubeList.Clear();
+            tempCellList.Clear();
     
             for (int i = 0; i < rowCount; i++)
             {
-                tempCubeList.Add(GetCube(i, colIndex));
+                tempCellList.Add(GetCell(i, colIndex));
             }
     
-            return tempCubeList;
+            return tempCellList;
         }
         
-        public List<Cube> GetRow(int rowIndex)
+        public List<Cell> GetRow(int rowIndex)
         {
-            tempCubeList.Clear();
+            tempCellList.Clear();
     
             for (int i = 0; i < columnCount; i++)
             {
-                tempCubeList.Add(GetCube(rowIndex, i));
+                tempCellList.Add(GetCell(rowIndex, i));
             }
     
-            return tempCubeList;
+            return tempCellList;
         }
 
-        private bool CheckValidMove(Cube cube)
+        private bool CheckValidMove(Cell cell)
         {
-            CubeType targetType = cube.CubeInfo.type;
-            if (GetCube(cube.RowIndex + 1, cube.ColIndex)?.CubeInfo.type == targetType) return true;
-            if (GetCube(cube.RowIndex - 1, cube.ColIndex)?.CubeInfo.type == targetType) return true;
-            if (GetCube(cube.RowIndex, cube.ColIndex + 1)?.CubeInfo.type == targetType) return true;
-            if (GetCube(cube.RowIndex, cube.ColIndex - 1)?.CubeInfo.type == targetType) return true;
-            return false;
+            return GetNeighboursWithSameType(cell).Count > 0;
         }
         
-        private List<Cube> FindAdjacentCubes(Cube cube)
+        private List<Cell> GetNeighboursWithSameType(Cell cell)
         {
-            CubeType type = cube.CubeInfo.type;
-            tempCubeList.Clear();
+            tempCellList.Clear();
+            CubeType target = cell.Cube.CubeInfo.type;
+            if (GetCell(cell.RowIndex + 1, cell.ColIndex)?.Cube?.CubeInfo.type == target)
+                tempCellList.Add(GetCell(cell.RowIndex + 1, cell.ColIndex));
+            if (GetCell(cell.RowIndex - 1, cell.ColIndex)?.Cube?.CubeInfo.type == target)
+                tempCellList.Add(GetCell(cell.RowIndex - 1, cell.ColIndex));
+            if (GetCell(cell.RowIndex, cell.ColIndex + 1)?.Cube?.CubeInfo.type == target)
+                tempCellList.Add(GetCell(cell.RowIndex, cell.ColIndex + 1));
+            if (GetCell(cell.RowIndex, cell.ColIndex - 1)?.Cube?.CubeInfo.type == target)
+                tempCellList.Add(GetCell(cell.RowIndex, cell.ColIndex + 1));
+            
+            return tempCellList;
+        }
+        
+        private List<Cell> FindMatchingCells(Cell cell)
+        {
+            CubeType type = cell.Cube.CubeInfo.type;
+            tempCellList.Clear();
             Queue<(int row, int col)> cellsToVisit = new();
-            cellsToVisit.Enqueue((cube.RowIndex, cube.ColIndex));
-
+            HashSet<(int row, int col)> visitedCells = new();
+            
+            cellsToVisit.Enqueue((cell.RowIndex, cell.ColIndex));
+            visitedCells.Add((cell.RowIndex, cell.ColIndex));
+            
             while (cellsToVisit.Count > 0)
             {
                 var (currentRow, currentCol) = cellsToVisit.Dequeue();
-                Cube currentCube = GetCube(currentRow, currentCol);
-
-                if (currentCube?.CubeInfo.type != type || cellsToVisit.Contains((currentCube.RowIndex,currentCube.ColIndex)))
+                Cube currentCube = GetCell(currentRow, currentCol)?.Cube;
+                
+                if (currentCube == null || currentCube.CubeInfo.type != type)
                 {
                     continue;
                 }
-                
-                tempCubeList.Add(currentCube);
-                
-                if (currentRow > 0) cellsToVisit.Enqueue((currentRow - 1, currentCol));
-                if (currentRow < rowCount - 1) cellsToVisit.Enqueue((currentRow + 1, currentCol));
-                if (currentCol > 0) cellsToVisit.Enqueue((currentRow, currentCol - 1));
-                if (currentCol < columnCount - 1) cellsToVisit.Enqueue((currentRow, currentCol + 1));
-            }
 
-            return tempCubeList;
+                tempCellList.Add(GetCell(currentRow, currentCol));
+                
+                if (currentRow > 0 && visitedCells.Add((currentRow - 1, currentCol)))
+                {
+                    cellsToVisit.Enqueue((currentRow - 1, currentCol));
+                }
+                if (currentRow < rowCount - 1 && visitedCells.Add((currentRow + 1, currentCol)))
+                {
+                    cellsToVisit.Enqueue((currentRow + 1, currentCol));
+                }
+                if (currentCol > 0 && visitedCells.Add((currentRow, currentCol - 1)))
+                {
+                    cellsToVisit.Enqueue((currentRow, currentCol - 1));
+                }
+                if (currentCol < columnCount - 1 && visitedCells.Add((currentRow, currentCol + 1)))
+                {
+                    cellsToVisit.Enqueue((currentRow, currentCol + 1));
+                }
+            }
+            
+            return tempCellList;
         }
         
-        private void BlastAdjacentCubes(Cube cube)
+        private void BlastAdjacentCubes(Cell clickedCell)
         {
-            List<Cube> adjacentCubes = FindAdjacentCubes(cube);
-            
-            foreach (var c in adjacentCubes)
+            List<Cell> matchGroup = FindMatchingCells(clickedCell);
+            foreach (var cell in matchGroup)
             {
-                grid[c.RowIndex, c.ColIndex] = null;
-                c.OnClick();
+                cell.Cube.OnClick();
+                cell.Cube = null;
+            }
+            
+            DropColumns(matchGroup);
+        }
+        
+        private void DropColumns(List<Cell> matchGroup)
+        {
+            HashSet<int> colIndexes = new HashSet<int>();
+
+            foreach (var cell in matchGroup)
+            {
+                if (colIndexes.Add(cell.ColIndex))
+                {
+                    DropColumn(cell.ColIndex);
+                }
             }
         }
+        
+        private async void DropColumn(int colIndex)
+        {
+            int dropCount = GetDropCountOfColumn(colIndex);
+            int startToDropFromRow = GetDropStartingRow(colIndex);
+            
+            List<UniTask> tasks = new List<UniTask>();
+            int spawnedCubeIndex = 0;
+            for (int i = startToDropFromRow; i < rowCount; i++)
+            {
+                if (i + dropCount < rowCount)
+                {
+                    grid[i, colIndex].Fill(grid[i + dropCount, colIndex].Cube);
+                }
+                else
+                {
+                    spawnedCubeIndex++;
+                    grid[i, colIndex].Cube = unitSpawner.SpawnNewCubeAtColumn(i, colIndex, spawnedCubeIndex);
+                }
+
+                tasks.Add(grid[i, colIndex].Cube.transform.DOLocalMove(Vector2.zero, 5f).SetSpeedBased().ToUniTask());
+            }
+           
+            await UniTask.WhenAll(tasks);
+        }
+        
+        private int GetDropCountOfColumn(int colIndex)
+        {
+            int dropCount = 0;
+            for (int i = 0 ; i < rowCount; i++) // TODO: Start from the highest blasted cell on the column 
+            {
+                if (GetCell(i, colIndex).Cube == null)
+                {
+                    dropCount++;
+                }
+            }
+
+            return dropCount;
+        }
+        
+        private int GetDropStartingRow(int colIndex)
+        {
+            int startToDropFromRow = 0;
+            
+            for (int i = 0 ; i < rowCount; i++) // TODO: Start from the highest blasted cell on the column 
+            {
+                if (GetCell(i, colIndex).Cube == null)
+                {
+                    startToDropFromRow = i;
+                    break;
+                }
+            }
+
+            return startToDropFromRow;
+        }
+        
     }
 }

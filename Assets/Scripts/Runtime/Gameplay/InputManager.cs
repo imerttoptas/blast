@@ -7,7 +7,7 @@ namespace Runtime.Gameplay
     public class InputManager : MonoBehaviour
     {
         [SerializeField] private Camera cam;
-        public Action<Cube> OnClickedToClickableObject;
+        public Action<Cell> OnClickedToClickableObject;
         
         private RaycastHit2D[] hits = new RaycastHit2D[10];
         private List<RaycastHit2D> hitList = new();
@@ -16,19 +16,19 @@ namespace Runtime.Gameplay
         {
             if (Input.GetMouseButtonUp(0))
             {
-                IClickable clickedObject = TryGetClickedObject(cam);
+                IClickable clickedObject = TryGetClickedObject();
 
                 if (clickedObject != null)
                 {
-                    if (clickedObject.GameObject.TryGetComponent(out Cube cube))
+                    if (clickedObject.GameObject.TryGetComponent(out Cell cell))
                     {
-                        OnClickedToClickableObject?.Invoke(cube);
+                        OnClickedToClickableObject?.Invoke(cell);
                     }
                 }
             }
         }
         
-        private IClickable TryGetClickedObject(Camera cam)
+        private IClickable TryGetClickedObject()
         {
             RaycastHit2D hit = Physics2D.Raycast(cam.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
             
@@ -43,7 +43,7 @@ namespace Runtime.Gameplay
             return null;
         }
         
-        private IClickable TryGetClosestObjectInACircle(Camera cam, RaycastHit2D[] hits, List<RaycastHit2D> hitList, float inputCircleRadius)
+        private IClickable TryGetClosestObjectInACircle(float inputCircleRadius)
         {
             Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
             int count = Physics2D.CircleCastNonAlloc(mousePos, inputCircleRadius, Vector2.zero, hits);
