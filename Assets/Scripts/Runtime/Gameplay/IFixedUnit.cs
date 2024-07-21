@@ -1,6 +1,6 @@
 namespace Runtime.Gameplay
 {
-    public interface IFixed
+    public interface IFixedUnit
     {
         
     }

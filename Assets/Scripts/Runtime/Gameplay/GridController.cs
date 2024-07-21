@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace Runtime.Gameplay
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private GridBuilder gridBuilder;
         [SerializeField] private InputManager inputManager;
-
+        
         private Cell[,] grid = new Cell[12, 12];
         private HashSet<Cell> tempCellHashSet = new();
         [SerializeField] private int rowCount;
@@ -19,6 +20,8 @@ namespace Runtime.Gameplay
         public int RowCount => rowCount;
         public int ColCount => columnCount;
         private List<UniTask> tasks = new();
+        private HashSet<Cell> popGroup = new();
+        
         private void OnEnable()
         {
             inputManager.OnClickedToClickableObject += TryMakeMove;
@@ -67,15 +70,13 @@ namespace Runtime.Gameplay
             return tempCellHashSet;
         }
         
-        
         private void TryMakeMove(Cell cell)
         {
             if (CheckValidMove(cell))
             {
-                BlastAdjacentCubes(cell);
+                BlastMatchGroup(cell);
             }
         }
-        
         
         private bool CheckValidMove(Cell cell)
         {
@@ -115,10 +116,11 @@ namespace Runtime.Gameplay
             return tempCellHashSet;
         }
         
-        private HashSet<Cell> FindMatchingCells(Cell cell)
+        private void FindCellsToPop(Cell cell) // Change tuple to Vector2 
         {
             CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
-            tempCellHashSet.Clear();
+            popGroup.Clear();
+            
             Queue<(int row, int col)> cellsToVisit = new();
             HashSet<(int row, int col)> visitedCells = new();
             cellsToVisit.Enqueue((cell.RowIndex, cell.ColIndex));
@@ -128,13 +130,16 @@ namespace Runtime.Gameplay
             {
                 var (currentRow, currentCol) = cellsToVisit.Dequeue();
                 Cube currentCube = GetCell(currentRow, currentCol)?.GetUnit<Cube>();
-
+                if (GetCell(currentRow,currentCol).Unit is IAffectedByNeighbour)
+                {
+                    popGroup.Add(GetCell(currentRow, currentCol));
+                }
                 if (currentCube == null || currentCube.CubeInfo.type != type)
                 {
                     continue;
                 }
-
-                tempCellHashSet.Add(GetCell(currentRow, currentCol));
+                
+                popGroup.Add(GetCell(currentRow, currentCol));
                 
                 if (currentRow > 0 && visitedCells.Add((currentRow - 1, currentCol)))
                 {
@@ -153,20 +158,22 @@ namespace Runtime.Gameplay
                     cellsToVisit.Enqueue((currentRow, currentCol + 1));
                 }
             }
-            
-            return tempCellHashSet;
         }
         
-        private void BlastAdjacentCubes(Cell clickedCell)
+        private void BlastMatchGroup(Cell clickedCell)
         {
-            HashSet<Cell> matchGroup = FindMatchingCells(clickedCell);
-            foreach (var cell in matchGroup)
+            FindCellsToPop(clickedCell);
+            HashSet<Cell> blastGroup = new HashSet<Cell>();
+            foreach (var cell in popGroup)
             {
-                cell.GetUnit<Cube>().Blast();
-                _ = cell.RemoveUnit();
+                cell.Unit.Pop(() =>
+                {
+                    _ = cell.RemoveUnit();
+                    blastGroup.Add(cell);
+                });
             }
             
-            ShiftGrid(matchGroup);
+            ShiftGrid(blastGroup);
         }
         
         private void ShiftGrid(HashSet<Cell> matchGroup)
@@ -185,9 +192,9 @@ namespace Runtime.Gameplay
         private async void ShiftColumn(int colIndex)
         {
             tasks.Clear();
-            int dropCount = GetEmptyCellCount(colIndex);
+            int spawnCount = GetEmptyCellCount(colIndex);
             ShiftExistingUnits(colIndex);
-            SpawnNewUnits(colIndex, dropCount);
+            SpawnNewUnits(colIndex, spawnCount);
             
             await UniTask.WhenAll(tasks);
         }
@@ -231,16 +238,16 @@ namespace Runtime.Gameplay
 
             return cellShiftInfo;
         }
+        
         private int GetCellShiftCount(Cell cell)
         {
             int cellShiftCount = 0;
             for (int i = cell.RowIndex; i >= 0; i--)
             {
-                if (GetCell(i,cell.ColIndex)?.Unit is IFixed)
+                if (GetCell(i,cell.ColIndex)?.Unit is IFixedUnit)
                 {
                     break;
                 }
-                
                 if(GetCell(i, cell.ColIndex)?.state == CellState.Empty)
                 {
                     cellShiftCount++;
@@ -256,7 +263,7 @@ namespace Runtime.Gameplay
             
             for (int i = rowCount -1 ; i > -1; i--)
             {
-                if (GetCell(i,colIndex)?.Unit is IFixed)
+                if (GetCell(i,colIndex)?.Unit is IFixedUnit)
                 {
                     break;
                 }
@@ -269,5 +276,32 @@ namespace Runtime.Gameplay
             return dropCount;
         }
 
+        public Vector2 GetDirectionVector(DirectionType directionType)
+        {
+            switch (directionType)
+            {
+                case DirectionType.Default:
+                    return Vector2.zero;
+                case DirectionType.Left:
+                    return Vector2.down;
+                case DirectionType.Right:
+                    return Vector2.up;
+                case DirectionType.Down:
+                    return Vector2.left;
+                case DirectionType.Up:
+                    return Vector2.right;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(directionType), directionType, null);
+            }
+        }
+    }
+
+    public enum DirectionType
+    {
+        Default = 0,
+        Left = 1,
+        Right = 2,
+        Down = 3,
+        Up = 4
     }
 }

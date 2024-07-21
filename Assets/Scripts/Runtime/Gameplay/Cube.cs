@@ -1,3 +1,5 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Runtime.Gameplay
@@ -6,16 +8,19 @@ namespace Runtime.Gameplay
     {
         [SerializeField] public SpriteRenderer spriteRenderer;
         public CubeInfo CubeInfo { get; private set; }
+        public GameObject GameObject => gameObject;
+        public bool IsClickable { get; set; }
+        
         public void Init(CubeInfo cubeInfo)
         {
             IsClickable = true;
             CubeInfo = cubeInfo;
             spriteRenderer.sprite = cubeInfo.defaultSprite;
         }
-        public GameObject GameObject => gameObject;
-        public bool IsClickable { get; set; }
-        public void Blast()
+        
+        public override void Pop(Action onBlast)
         {
+            onBlast?.Invoke();
             Destroy(gameObject);
         }
     }
