@@ -399,12 +399,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isPersistant: 1
   unitSpawner: {fileID: 492071507}
-  cubeTypeCatalogue: {fileID: 11400000, guid: e68374b3a485244f5b8e7b10a64ac631, type: 2}
-  cubePrefab: {fileID: 7380928115427342865, guid: d320ac233500840fe8982efb1f55d6c6, type: 3}
   gridBuilder: {fileID: 1091369493}
   inputManager: {fileID: 1202913990}
-  rowCount: 4
-  columnCount: 4
+  rowCount: 6
+  columnCount: 6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

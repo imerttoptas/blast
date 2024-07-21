@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
@@ -13,11 +13,12 @@ namespace Runtime.Gameplay
         [SerializeField] private InputManager inputManager;
 
         private Cell[,] grid = new Cell[12, 12];
-        private List<Cell> tempCellList = new();
+        private HashSet<Cell> tempCellHashSet = new();
         [SerializeField] private int rowCount;
         [SerializeField] private int columnCount;
         public int RowCount => rowCount;
         public int ColCount => columnCount;
+        private List<UniTask> tasks = new();
         private void OnEnable()
         {
             inputManager.OnClickedToClickableObject += TryMakeMove;
@@ -51,72 +52,89 @@ namespace Runtime.Gameplay
             return null;
         }
     
-        public List<Cell> GetColumn(int colIndex)
+        public HashSet<Cell> GetColumn(int colIndex)
         {
-            tempCellList.Clear();
+            tempCellHashSet.Clear();
     
             for (int i = 0; i < rowCount; i++)
             {
-                tempCellList.Add(GetCell(i, colIndex));
+                tempCellHashSet.Add(GetCell(i, colIndex));
             }
     
-            return tempCellList;
+            return tempCellHashSet;
         }
         
-        public List<Cell> GetRow(int rowIndex)
+        public HashSet<Cell> GetRow(int rowIndex)
         {
-            tempCellList.Clear();
+            tempCellHashSet.Clear();
     
             for (int i = 0; i < columnCount; i++)
             {
-                tempCellList.Add(GetCell(rowIndex, i));
+                tempCellHashSet.Add(GetCell(rowIndex, i));
             }
     
-            return tempCellList;
+            return tempCellHashSet;
         }
 
         private bool CheckValidMove(Cell cell)
         {
-            return GetNeighboursWithSameType(cell).Count > 0;
+            return GetCubeNeighboursWithSameType(cell).Count > 0;
         }
         
-        private List<Cell> GetNeighboursWithSameType(Cell cell)
+        private HashSet<Cell> GetCubeNeighboursWithSameType(Cell cell)
         {
-            tempCellList.Clear();
-            CubeType target = cell.Cube.CubeInfo.type;
-            if (GetCell(cell.RowIndex + 1, cell.ColIndex)?.Cube?.CubeInfo.type == target)
-                tempCellList.Add(GetCell(cell.RowIndex + 1, cell.ColIndex));
-            if (GetCell(cell.RowIndex - 1, cell.ColIndex)?.Cube?.CubeInfo.type == target)
-                tempCellList.Add(GetCell(cell.RowIndex - 1, cell.ColIndex));
-            if (GetCell(cell.RowIndex, cell.ColIndex + 1)?.Cube?.CubeInfo.type == target)
-                tempCellList.Add(GetCell(cell.RowIndex, cell.ColIndex + 1));
-            if (GetCell(cell.RowIndex, cell.ColIndex - 1)?.Cube?.CubeInfo.type == target)
-                tempCellList.Add(GetCell(cell.RowIndex, cell.ColIndex + 1));
+            HashSet<Cell> cubeNeighbours = GetNeighboursWithType(cell, GameUnitType.Cube);
+
+            HashSet<Cell> cubeNeighboursWithSameType = new HashSet<Cell>();
             
-            return tempCellList;
+            foreach (Cell neighbourCell in cubeNeighbours)
+            {
+                if (cell.GetUnit<Cube>() && 
+                    cell.GetUnit<Cube>().CubeInfo.type == neighbourCell.GetUnit<Cube>().CubeInfo.type)
+                {
+                    cubeNeighboursWithSameType.Add(neighbourCell);
+                }
+            }
+            
+            return cubeNeighboursWithSameType;
+        }        
+        
+        private HashSet<Cell> GetNeighboursWithType(Cell cell, GameUnitType type)
+        {
+            tempCellHashSet.Clear();
+            
+            if (GetCell(cell.RowIndex + 1, cell.ColIndex)?.Unit?.type == type)
+                tempCellHashSet.Add(GetCell(cell.RowIndex + 1, cell.ColIndex));
+            if (GetCell(cell.RowIndex - 1, cell.ColIndex)?.Unit?.type == type)
+                tempCellHashSet.Add(GetCell(cell.RowIndex - 1, cell.ColIndex));
+            if (GetCell(cell.RowIndex, cell.ColIndex + 1)?.Unit?.type == type)
+                tempCellHashSet.Add(GetCell(cell.RowIndex, cell.ColIndex + 1));
+            if (GetCell(cell.RowIndex, cell.ColIndex - 1)?.Unit?.type == type)
+                tempCellHashSet.Add(GetCell(cell.RowIndex, cell.ColIndex - 1));
+            
+            return tempCellHashSet;
         }
         
-        private List<Cell> FindMatchingCells(Cell cell)
+        private HashSet<Cell> FindMatchingCells(Cell cell)
         {
-            CubeType type = cell.Cube.CubeInfo.type;
-            tempCellList.Clear();
+            CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
+            tempCellHashSet.Clear();
             Queue<(int row, int col)> cellsToVisit = new();
             HashSet<(int row, int col)> visitedCells = new();
-            
             cellsToVisit.Enqueue((cell.RowIndex, cell.ColIndex));
             visitedCells.Add((cell.RowIndex, cell.ColIndex));
             
             while (cellsToVisit.Count > 0)
             {
                 var (currentRow, currentCol) = cellsToVisit.Dequeue();
-                Cube currentCube = GetCell(currentRow, currentCol)?.Cube;
-                
+                Cube currentCube = GetCell(currentRow, currentCol)?.GetUnit<Cube>();
+
                 if (currentCube == null || currentCube.CubeInfo.type != type)
                 {
                     continue;
                 }
 
-                tempCellList.Add(GetCell(currentRow, currentCol));
+                tempCellHashSet.Add(GetCell(currentRow, currentCol));
                 
                 if (currentRow > 0 && visitedCells.Add((currentRow - 1, currentCol)))
                 {
@@ -136,88 +154,113 @@ namespace Runtime.Gameplay
                 }
             }
             
-            return tempCellList;
+            return tempCellHashSet;
         }
         
         private void BlastAdjacentCubes(Cell clickedCell)
         {
-            List<Cell> matchGroup = FindMatchingCells(clickedCell);
+            HashSet<Cell> matchGroup = FindMatchingCells(clickedCell);
             foreach (var cell in matchGroup)
             {
-                cell.Cube.OnClick();
-                cell.Cube = null;
+                cell.state = CellState.Empty;
+                cell.GetUnit<Cube>().Blast();
+                cell.Unit = null;
             }
             
-            DropColumns(matchGroup);
+            ShiftGrid(matchGroup);
         }
         
-        private void DropColumns(List<Cell> matchGroup)
+        private void ShiftGrid(HashSet<Cell> matchGroup)
         {
             HashSet<int> colIndexes = new HashSet<int>();
-
+            
             foreach (var cell in matchGroup)
             {
                 if (colIndexes.Add(cell.ColIndex))
                 {
-                    DropColumn(cell.ColIndex);
+                    ShiftColumn(cell.ColIndex);
                 }
             }
         }
         
-        private async void DropColumn(int colIndex)
+        private async void ShiftColumn(int colIndex)
         {
-            int dropCount = GetDropCountOfColumn(colIndex);
-            int startToDropFromRow = GetDropStartingRow(colIndex);
+            tasks.Clear();
+            int dropCount = GetEmptyCellCount(colIndex);
+            Dictionary<int, int> cellShiftInfo = GetShiftableUnitsInfo(colIndex);
+            ShiftExistingUnits(cellShiftInfo, colIndex);
+            SpawnNewUnits(colIndex, dropCount);
             
-            List<UniTask> tasks = new List<UniTask>();
-            int spawnedCubeIndex = 0;
-            for (int i = startToDropFromRow; i < rowCount; i++)
-            {
-                if (i + dropCount < rowCount)
-                {
-                    grid[i, colIndex].Fill(grid[i + dropCount, colIndex].Cube);
-                }
-                else
-                {
-                    spawnedCubeIndex++;
-                    grid[i, colIndex].Cube = unitSpawner.SpawnNewCubeAtColumn(i, colIndex, spawnedCubeIndex);
-                }
-
-                tasks.Add(grid[i, colIndex].Cube.transform.DOLocalMove(Vector2.zero, 5f).SetSpeedBased().ToUniTask());
-            }
-           
             await UniTask.WhenAll(tasks);
         }
+
+        private void SpawnNewUnits(int colIndex, int dropCount)
+        {
+            for (int i = 0; i < dropCount; i++)
+            {
+                GetCell(rowCount - dropCount + i, colIndex).Fill(unitSpawner.SpawnNewCube(colIndex, i));
+                tasks.Add(GetCell(rowCount - dropCount + i, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 5f)
+                    .SetSpeedBased().ToUniTask());
+            }
+        }
+
+        private void ShiftExistingUnits(Dictionary<int, int> cellShiftInfo, int colIndex)
+        {
+            foreach (var info in cellShiftInfo.Reverse())
+            {
+                GetCell(info.Key - info.Value, colIndex).Fill(GetCell(info.Key, colIndex).Unit);
+                tasks.Add(GetCell(info.Key - info.Value, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 5f)
+                    .SetSpeedBased().ToUniTask());
+            }
+        }
+
+        private Dictionary<int, int> GetShiftableUnitsInfo(int colIndex)
+        {
+            Dictionary<int, int> cellShiftInfo = new(columnCount);
+            
+            for (int i = RowCount - 1; i > 0 ; i--)
+            {
+                if (GetCell(i, colIndex)?.state != 
+                    CellState.Empty && GetCell(i, colIndex)?.Unit?.type == GameUnitType.Cube) // TODO: Change condition to -> if unit is IShiftable
+                {
+                    int cellShiftCount = GetCellShiftCount(GetCell(i, colIndex));
+                    if (cellShiftCount > 0 )
+                    {
+                        cellShiftInfo.Add(i, cellShiftCount);
+                    }
+                }
+            }
+
+            return cellShiftInfo;
+        }
         
-        private int GetDropCountOfColumn(int colIndex)
+        private int GetEmptyCellCount(int colIndex)
         {
             int dropCount = 0;
-            for (int i = 0 ; i < rowCount; i++) // TODO: Start from the highest blasted cell on the column 
+
+            for (int i = 0; i < rowCount; i++)
             {
-                if (GetCell(i, colIndex).Cube == null)
+                if (GetCell(i, colIndex)?.state == CellState.Empty)
                 {
                     dropCount++;
                 }
             }
-
+            
             return dropCount;
         }
-        
-        private int GetDropStartingRow(int colIndex)
+
+        private int GetCellShiftCount(Cell cell)
         {
-            int startToDropFromRow = 0;
-            
-            for (int i = 0 ; i < rowCount; i++) // TODO: Start from the highest blasted cell on the column 
+            int cellShiftCount = 0;
+            for (int i = cell.RowIndex; i >= 0; i--)
             {
-                if (GetCell(i, colIndex).Cube == null)
+                if (GetCell(i, cell.ColIndex)?.state == CellState.Empty)
                 {
-                    startToDropFromRow = i;
-                    break;
+                    cellShiftCount++;
                 }
             }
 
-            return startToDropFromRow;
+            return cellShiftCount;
         }
-        
     }
 }

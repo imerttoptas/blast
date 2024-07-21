@@ -1,4 +1,3 @@
-using DG.Tweening;
 using UnityEngine;
 
 namespace Runtime.Gameplay
@@ -10,7 +9,7 @@ namespace Runtime.Gameplay
         public CellState state;
         public int RowIndex { get; private set; }
         public int ColIndex { get; private set; }
-        public Cube Cube { get; set;}
+        public GameUnit Unit { get; set;}
         
         public void Init(Transform parent, Vector2 pos, Vector2 scale, int rowIndex, int colIndex)
         {
@@ -23,16 +22,26 @@ namespace Runtime.Gameplay
             transform.SetParent(parent);
         }
         
-        public void Fill(Cube cube)
+        public void Fill(GameUnit targetUnit)
         {
-            Cube = cube;
-            cube.transform.SetParent(transform);
+            Unit = targetUnit;
+            Unit.transform.SetParent(transform);
             state = CellState.Full;
         }
         
         public void OnClick()
         {
             
+        }
+
+        public T GetUnit<T>() where T : GameUnit
+        {
+            if (Unit is T targetUnit)
+            {
+                return targetUnit;
+            }
+
+            return null;
         }
 
     }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay
 {
-    public class Cube : MonoBehaviour
+    public class Cube : GameUnit
     {
         [SerializeField] public SpriteRenderer spriteRenderer;
         public CubeInfo CubeInfo { get; private set; }
@@ -14,11 +14,12 @@ namespace Runtime.Gameplay
         }
         public GameObject GameObject => gameObject;
         public bool IsClickable { get; set; }
-        public void OnClick()
+        public void Blast()
         {
             Destroy(gameObject);
         }
     }
+    
     public enum CubeType
     {
         Empty = 0,

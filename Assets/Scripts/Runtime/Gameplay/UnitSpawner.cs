@@ -16,14 +16,13 @@ namespace Runtime.Gameplay
             createdCube.transform.position = GridController.instance.GetCell(row, col).transform.position;
         }
         
-        public Cube SpawnNewCubeAtColumn(int rowIndex, int colIndex, int spawnedCubeIndex)
+        public Cube SpawnNewCube(int colIndex, int index)
         {
             Cube createdCube = Instantiate(cubePrefab);
             createdCube.transform.position =
                 GridController.instance.GetCell(GridController.instance.RowCount - 1, colIndex).transform.position +
-                Vector3.up * (spawnedCubeIndex * 2f);
+                Vector3.up * ((index + 1) * 2f);
             createdCube.Init(cubeTypeCatalogue.GetRandomCubeTypeFromRange());
-            GridController.instance.GetCell(rowIndex, colIndex).Fill(createdCube);
             return createdCube;
         }
     }
