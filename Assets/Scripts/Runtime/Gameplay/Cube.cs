@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay
 {
-    public class Cube : GameUnit
+    public class Cube : GameUnit , IShiftable
     {
         [SerializeField] public SpriteRenderer spriteRenderer;
         public CubeInfo CubeInfo { get; private set; }

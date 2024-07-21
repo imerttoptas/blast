@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Runtime.Gameplay
 {
-    public class Box : GameUnit , IAffectedByNeighbour
+    public class Box : GameUnit , IAffectedByNeighbour , IFixed
     {
         public int Health { get; private set; } = 2;
         

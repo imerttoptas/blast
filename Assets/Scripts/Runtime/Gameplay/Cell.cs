@@ -29,6 +29,14 @@ namespace Runtime.Gameplay
             state = CellState.Full;
         }
         
+        public GameUnit RemoveUnit()
+        {
+            GameUnit cachedUnit = Unit;
+            state = CellState.Empty;
+            Unit = null;
+            return cachedUnit;
+        }
+        
         public void OnClick()
         {
             

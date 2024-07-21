@@ -7,7 +7,6 @@ namespace Runtime.Gameplay
     {
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private Cell cellPrefab;
-        [SerializeField] private Cube cubePrefab;
         [SerializeField] private int colorCount;
         
         public void GenerateGrid(Cell[,] grid)
@@ -23,7 +22,7 @@ namespace Runtime.Gameplay
                     createdCell.Init(parent: transform, targetPos, Vector2.one, rowIndex, colIndex);
                     grid[rowIndex, colIndex] = createdCell;
                     
-                    unitSpawner.SpawnCubeAt(rowIndex, colIndex);
+                    unitSpawner.SpawnRandomUnit(rowIndex, colIndex);
                 }
             }
         }

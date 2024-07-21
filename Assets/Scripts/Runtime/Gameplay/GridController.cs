@@ -34,15 +34,6 @@ namespace Runtime.Gameplay
         {
             gridBuilder.GenerateGrid(grid);
         }
-        
-        private void TryMakeMove(Cell cell)
-        {
-            if (CheckValidMove(cell))
-            {
-                BlastAdjacentCubes(cell);
-            }
-        }
-        
         public Cell GetCell(int row, int col)
         {
             if (row >= 0 && row < rowCount && col >= 0 && col < columnCount)
@@ -75,7 +66,17 @@ namespace Runtime.Gameplay
     
             return tempCellHashSet;
         }
-
+        
+        
+        private void TryMakeMove(Cell cell)
+        {
+            if (CheckValidMove(cell))
+            {
+                BlastAdjacentCubes(cell);
+            }
+        }
+        
+        
         private bool CheckValidMove(Cell cell)
         {
             return GetCubeNeighboursWithSameType(cell).Count > 0;
@@ -84,7 +85,6 @@ namespace Runtime.Gameplay
         private HashSet<Cell> GetCubeNeighboursWithSameType(Cell cell)
         {
             HashSet<Cell> cubeNeighbours = GetNeighboursWithType(cell, GameUnitType.Cube);
-
             HashSet<Cell> cubeNeighboursWithSameType = new HashSet<Cell>();
             
             foreach (Cell neighbourCell in cubeNeighbours)
@@ -162,9 +162,8 @@ namespace Runtime.Gameplay
             HashSet<Cell> matchGroup = FindMatchingCells(clickedCell);
             foreach (var cell in matchGroup)
             {
-                cell.state = CellState.Empty;
                 cell.GetUnit<Cube>().Blast();
-                cell.Unit = null;
+                _ = cell.RemoveUnit();
             }
             
             ShiftGrid(matchGroup);
@@ -187,8 +186,7 @@ namespace Runtime.Gameplay
         {
             tasks.Clear();
             int dropCount = GetEmptyCellCount(colIndex);
-            Dictionary<int, int> cellShiftInfo = GetShiftableUnitsInfo(colIndex);
-            ShiftExistingUnits(cellShiftInfo, colIndex);
+            ShiftExistingUnits(colIndex);
             SpawnNewUnits(colIndex, dropCount);
             
             await UniTask.WhenAll(tasks);
@@ -204,11 +202,11 @@ namespace Runtime.Gameplay
             }
         }
 
-        private void ShiftExistingUnits(Dictionary<int, int> cellShiftInfo, int colIndex)
+        private void ShiftExistingUnits(int colIndex)
         {
-            foreach (var info in cellShiftInfo.Reverse())
+            foreach (var info in GetShiftableUnitsInfo(colIndex).Reverse())
             {
-                GetCell(info.Key - info.Value, colIndex).Fill(GetCell(info.Key, colIndex).Unit);
+                GetCell(info.Key - info.Value, colIndex).Fill(GetCell(info.Key, colIndex).RemoveUnit());
                 tasks.Add(GetCell(info.Key - info.Value, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 5f)
                     .SetSpeedBased().ToUniTask());
             }
@@ -221,7 +219,7 @@ namespace Runtime.Gameplay
             for (int i = RowCount - 1; i > 0 ; i--)
             {
                 if (GetCell(i, colIndex)?.state != 
-                    CellState.Empty && GetCell(i, colIndex)?.Unit?.type == GameUnitType.Cube) // TODO: Change condition to -> if unit is IShiftable
+                    CellState.Empty && GetCell(i, colIndex)?.Unit is IShiftable)
                 {
                     int cellShiftCount = GetCellShiftCount(GetCell(i, colIndex));
                     if (cellShiftCount > 0 )
@@ -233,13 +231,35 @@ namespace Runtime.Gameplay
 
             return cellShiftInfo;
         }
-        
+        private int GetCellShiftCount(Cell cell)
+        {
+            int cellShiftCount = 0;
+            for (int i = cell.RowIndex; i >= 0; i--)
+            {
+                if (GetCell(i,cell.ColIndex)?.Unit is IFixed)
+                {
+                    break;
+                }
+                
+                if(GetCell(i, cell.ColIndex)?.state == CellState.Empty)
+                {
+                    cellShiftCount++;
+                }
+
+            }
+
+            return cellShiftCount;
+        }
         private int GetEmptyCellCount(int colIndex)
         {
             int dropCount = 0;
-
-            for (int i = 0; i < rowCount; i++)
+            
+            for (int i = rowCount -1 ; i > -1; i--)
             {
+                if (GetCell(i,colIndex)?.Unit is IFixed)
+                {
+                    break;
+                }
                 if (GetCell(i, colIndex)?.state == CellState.Empty)
                 {
                     dropCount++;
@@ -249,18 +269,5 @@ namespace Runtime.Gameplay
             return dropCount;
         }
 
-        private int GetCellShiftCount(Cell cell)
-        {
-            int cellShiftCount = 0;
-            for (int i = cell.RowIndex; i >= 0; i--)
-            {
-                if (GetCell(i, cell.ColIndex)?.state == CellState.Empty)
-                {
-                    cellShiftCount++;
-                }
-            }
-
-            return cellShiftCount;
-        }
     }
 }
