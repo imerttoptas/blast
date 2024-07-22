@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Pink
   m_EditorClassIdentifier: 
   type: 3
-  defaultSprite: {fileID: 21300000, guid: ab5605d68cc9946e6a4ff11a308f5b46, type: 3}
+  defaultSprite: {fileID: -1161730966, guid: ab5605d68cc9946e6a4ff11a308f5b46, type: 3}
   cubeSpriteList:
-  - {fileID: 21300000, guid: eea21cd26b1c74b93812a9d564ee0160, type: 3}
-  - {fileID: 21300000, guid: a6392b5b1c8bd428182111251494a651, type: 3}
-  - {fileID: 21300000, guid: f5db11ff7b67f4a12b208387fbcd420c, type: 3}
+  - {fileID: 1511358664, guid: eea21cd26b1c74b93812a9d564ee0160, type: 3}
+  - {fileID: -946402309, guid: a6392b5b1c8bd428182111251494a651, type: 3}
+  - {fileID: -379633487, guid: f5db11ff7b67f4a12b208387fbcd420c, type: 3}

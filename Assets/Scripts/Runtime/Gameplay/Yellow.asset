@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Yellow
   m_EditorClassIdentifier: 
   type: 6
-  defaultSprite: {fileID: 21300000, guid: 2dc98ac4821a2494eb1c489fad551d3e, type: 3}
+  defaultSprite: {fileID: -1324773552, guid: 2dc98ac4821a2494eb1c489fad551d3e, type: 3}
   cubeSpriteList:
-  - {fileID: 21300000, guid: 36d71e44a10ce4c74ba36b823882e7d0, type: 3}
-  - {fileID: 21300000, guid: 2da17139da93448df99aa5077661e0cb, type: 3}
-  - {fileID: 21300000, guid: ec45b4a7724214cbc96fa0a5207956f7, type: 3}
+  - {fileID: -1137077433, guid: 36d71e44a10ce4c74ba36b823882e7d0, type: 3}
+  - {fileID: -1666940464, guid: 2da17139da93448df99aa5077661e0cb, type: 3}
+  - {fileID: -612106069, guid: ec45b4a7724214cbc96fa0a5207956f7, type: 3}
