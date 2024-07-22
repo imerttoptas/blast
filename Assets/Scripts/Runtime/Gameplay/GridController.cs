@@ -13,14 +13,14 @@ namespace Runtime.Gameplay
         [SerializeField] private GridBuilder gridBuilder;
         [SerializeField] private InputManager inputManager;
         
-        private Cell[,] grid = new Cell[12, 12];
         private HashSet<Cell> tempCellHashSet = new();
+        private List<UniTask> tasks = new();
+
+        private Cell[,] grid = new Cell[12, 12];
         [SerializeField] private int rowCount;
         [SerializeField] private int columnCount;
         public int RowCount => rowCount;
         public int ColCount => columnCount;
-        private List<UniTask> tasks = new();
-        private HashSet<Cell> popGroup = new();
         
         private void OnEnable()
         {
@@ -30,13 +30,14 @@ namespace Runtime.Gameplay
         private void OnDisable()
         {
             inputManager.OnClickedToClickableObject -= TryMakeMove;
-
         }
         
         void Start()
         {
             gridBuilder.GenerateGrid(grid);
+            ArrangeCubeStates();
         }
+        
         public Cell GetCell(int row, int col)
         {
             if (row >= 0 && row < rowCount && col >= 0 && col < columnCount)
@@ -80,46 +81,57 @@ namespace Runtime.Gameplay
         
         private bool CheckValidMove(Cell cell)
         {
-            return GetCubeNeighboursWithSameType(cell).Count > 0;
+            return GetPositionsAdjacentCubes(cell).Count > 0;
         }
         
-        private HashSet<Cell> GetCubeNeighboursWithSameType(Cell cell)
+        private HashSet<Vector2> GetPositionsAdjacentCubes(Cell cell)
         {
-            HashSet<Cell> cubeNeighbours = GetNeighboursWithType(cell, GameUnitType.Cube);
-            HashSet<Cell> cubeNeighboursWithSameType = new HashSet<Cell>();
+            HashSet<Vector2> positions = new();
             
-            foreach (Cell neighbourCell in cubeNeighbours)
+            if (!cell.GetUnit<Cube>())
             {
-                if (cell.GetUnit<Cube>() && 
-                    cell.GetUnit<Cube>().CubeInfo.type == neighbourCell.GetUnit<Cube>().CubeInfo.type)
-                {
-                    cubeNeighboursWithSameType.Add(neighbourCell);
-                }
+                return positions;
             }
             
-            return cubeNeighboursWithSameType;
-        }        
-        
-        private HashSet<Cell> GetNeighboursWithType(Cell cell, GameUnitType type)
-        {
-            tempCellHashSet.Clear();
-            
-            if (GetCell(cell.RowIndex + 1, cell.ColIndex)?.Unit?.type == type)
-                tempCellHashSet.Add(GetCell(cell.RowIndex + 1, cell.ColIndex));
-            if (GetCell(cell.RowIndex - 1, cell.ColIndex)?.Unit?.type == type)
-                tempCellHashSet.Add(GetCell(cell.RowIndex - 1, cell.ColIndex));
-            if (GetCell(cell.RowIndex, cell.ColIndex + 1)?.Unit?.type == type)
-                tempCellHashSet.Add(GetCell(cell.RowIndex, cell.ColIndex + 1));
-            if (GetCell(cell.RowIndex, cell.ColIndex - 1)?.Unit?.type == type)
-                tempCellHashSet.Add(GetCell(cell.RowIndex, cell.ColIndex - 1));
-            
-            return tempCellHashSet;
+            CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
+            foreach (var neighbourCell in GetAdjacentCells(cell))
+            {
+                if (neighbourCell.GetUnit<Cube>()?.CubeInfo.type == type)
+                {
+                    positions.Add(new Vector2(neighbourCell.RowIndex, neighbourCell.ColIndex));
+                }
+            }
+
+            return positions;
         }
         
-        private void FindCellsToPop(Cell cell) // Change tuple to Vector2 
+        private HashSet<Cell> GetAdjacentCells(Cell cell) // TODO: Change Cell to Vector2
+        {
+            HashSet<Cell> adjacentCells = new HashSet<Cell>();
+
+            Vector2[] directions = {
+                Vector2.up,
+                Vector2.down,
+                Vector2.right,
+                Vector2.left
+            };
+
+            foreach (var direction in directions)
+            {
+                Cell neighbour = GetCell((int)(cell.RowIndex + direction.y), (int)(cell.ColIndex + direction.x));
+                if (neighbour != null)
+                {
+                    adjacentCells.Add(neighbour);
+                }
+            }
+    
+            return adjacentCells;
+        }
+        
+        private HashSet<Cell> FindCellsToPop(Cell cell, bool checkBoxes = true) // Change tuple to Vector2 
         {
             CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
-            popGroup.Clear();
+            tempCellHashSet.Clear();
             
             Queue<(int row, int col)> cellsToVisit = new();
             HashSet<(int row, int col)> visitedCells = new();
@@ -129,42 +141,38 @@ namespace Runtime.Gameplay
             while (cellsToVisit.Count > 0)
             {
                 var (currentRow, currentCol) = cellsToVisit.Dequeue();
-                Cube currentCube = GetCell(currentRow, currentCol)?.GetUnit<Cube>();
-                if (GetCell(currentRow,currentCol).Unit is IAffectedByNeighbour)
+                
+                if (checkBoxes && GetCell(currentRow,currentCol).Unit is IAffectedByNeighbour)
                 {
-                    popGroup.Add(GetCell(currentRow, currentCol));
+                    tempCellHashSet.Add(GetCell(currentRow, currentCol));
+                    continue;
                 }
+                
+                Cube currentCube = GetCell(currentRow, currentCol)?.GetUnit<Cube>();
+                
                 if (currentCube == null || currentCube.CubeInfo.type != type)
                 {
                     continue;
                 }
                 
-                popGroup.Add(GetCell(currentRow, currentCol));
+                tempCellHashSet.Add(GetCell(currentRow, currentCol));
                 
-                if (currentRow > 0 && visitedCells.Add((currentRow - 1, currentCol)))
+                foreach (var adjacentCell in GetAdjacentCells(GetCell(currentRow, currentCol)))
                 {
-                    cellsToVisit.Enqueue((currentRow - 1, currentCol));
-                }
-                if (currentRow < rowCount - 1 && visitedCells.Add((currentRow + 1, currentCol)))
-                {
-                    cellsToVisit.Enqueue((currentRow + 1, currentCol));
-                }
-                if (currentCol > 0 && visitedCells.Add((currentRow, currentCol - 1)))
-                {
-                    cellsToVisit.Enqueue((currentRow, currentCol - 1));
-                }
-                if (currentCol < columnCount - 1 && visitedCells.Add((currentRow, currentCol + 1)))
-                {
-                    cellsToVisit.Enqueue((currentRow, currentCol + 1));
+                    if (visitedCells.Add((adjacentCell.RowIndex,adjacentCell.ColIndex)))
+                    {
+                        cellsToVisit.Enqueue((adjacentCell.RowIndex, adjacentCell.ColIndex));
+                    }
                 }
             }
+
+            return tempCellHashSet;
         }
         
         private void BlastMatchGroup(Cell clickedCell)
         {
-            FindCellsToPop(clickedCell);
             HashSet<Cell> blastGroup = new HashSet<Cell>();
-            foreach (var cell in popGroup)
+            foreach (var cell in FindCellsToPop(clickedCell))
             {
                 cell.Unit.Pop(() =>
                 {
@@ -176,20 +184,50 @@ namespace Runtime.Gameplay
             ShiftGrid(blastGroup);
         }
         
-        private void ShiftGrid(HashSet<Cell> matchGroup)
+        private async void ShiftGrid(HashSet<Cell> matchGroup)
         {
             HashSet<int> colIndexes = new HashSet<int>();
-            
+            List<UniTask> shiftTasks = new();
+
             foreach (var cell in matchGroup)
             {
                 if (colIndexes.Add(cell.ColIndex))
                 {
-                    ShiftColumn(cell.ColIndex);
+                    shiftTasks.Add(ShiftColumn(cell.ColIndex));
+                }
+            }
+            
+            await UniTask.WhenAll(shiftTasks);
+            ArrangeCubeStates();
+        }
+        
+        private void ArrangeCubeStates()
+        {
+            HashSet<Cell> checkedCells = new HashSet<Cell>();
+            for (int i = 0; i < RowCount; i++)
+            {
+                for (int j = 0; j < ColCount; j++)
+                {
+                    Cell cell = GetCell(i, j);
+                    if (cell && !checkedCells.Contains(cell)&& cell.GetUnit<Cube>())
+                    {
+                        HashSet<Cell> cubeGroup = FindCellsToPop(cell, false);
+                        SetCubeGroupState(cubeGroup);
+                        checkedCells.UnionWith(cubeGroup);
+                    }
                 }
             }
         }
+
+        private void SetCubeGroupState(HashSet<Cell> cells)
+        {
+            foreach (var cell in cells)
+            {
+                cell.GetUnit<Cube>()?.SetState(cells.Count);
+            }
+        }
         
-        private async void ShiftColumn(int colIndex)
+        private async UniTask ShiftColumn(int colIndex)
         {
             tasks.Clear();
             int spawnCount = GetEmptyCellCount(colIndex);
@@ -198,13 +236,13 @@ namespace Runtime.Gameplay
             
             await UniTask.WhenAll(tasks);
         }
-
+        
         private void SpawnNewUnits(int colIndex, int dropCount)
         {
             for (int i = 0; i < dropCount; i++)
             {
                 GetCell(rowCount - dropCount + i, colIndex).Fill(unitSpawner.SpawnNewCube(colIndex, i));
-                tasks.Add(GetCell(rowCount - dropCount + i, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 5f)
+                tasks.Add(GetCell(rowCount - dropCount + i, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 10f)
                     .SetSpeedBased().ToUniTask());
             }
         }
@@ -214,11 +252,11 @@ namespace Runtime.Gameplay
             foreach (var info in GetShiftableUnitsInfo(colIndex).Reverse())
             {
                 GetCell(info.Key - info.Value, colIndex).Fill(GetCell(info.Key, colIndex).RemoveUnit());
-                tasks.Add(GetCell(info.Key - info.Value, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 5f)
+                tasks.Add(GetCell(info.Key - info.Value, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 10f)
                     .SetSpeedBased().ToUniTask());
             }
         }
-
+        
         private Dictionary<int, int> GetShiftableUnitsInfo(int colIndex)
         {
             Dictionary<int, int> cellShiftInfo = new(columnCount);
@@ -257,6 +295,7 @@ namespace Runtime.Gameplay
 
             return cellShiftCount;
         }
+        
         private int GetEmptyCellCount(int colIndex)
         {
             int dropCount = 0;
@@ -275,33 +314,5 @@ namespace Runtime.Gameplay
             
             return dropCount;
         }
-
-        public Vector2 GetDirectionVector(DirectionType directionType)
-        {
-            switch (directionType)
-            {
-                case DirectionType.Default:
-                    return Vector2.zero;
-                case DirectionType.Left:
-                    return Vector2.down;
-                case DirectionType.Right:
-                    return Vector2.up;
-                case DirectionType.Down:
-                    return Vector2.left;
-                case DirectionType.Up:
-                    return Vector2.right;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(directionType), directionType, null);
-            }
-        }
-    }
-
-    public enum DirectionType
-    {
-        Default = 0,
-        Left = 1,
-        Right = 2,
-        Down = 3,
-        Up = 4
     }
 }

@@ -23,6 +23,18 @@ namespace Runtime.Gameplay
             onBlast?.Invoke();
             Destroy(gameObject);
         }
+
+        public void SetState(int count)
+        {
+            spriteRenderer.sprite = count switch
+            {
+                < 5 => CubeInfo.defaultSprite,
+                >= 5 and < 8 => CubeInfo.cubeSpriteList[0],
+                >= 8 and < 10 => CubeInfo.cubeSpriteList[1],
+                _ => CubeInfo.cubeSpriteList[2]
+            };
+        }
+
     }
     
     public enum CubeType

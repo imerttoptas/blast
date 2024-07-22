@@ -9,8 +9,7 @@ namespace Runtime.Gameplay
         public CellState state;
         public int RowIndex { get; private set; }
         public int ColIndex { get; private set; }
-        public Vector2 Pos => new(RowIndex, ColIndex);
-        public GameUnit Unit { get; set;}
+        public GameUnit Unit { get; private set;}
         
         public void Init(Transform parent, Vector2 pos, Vector2 scale, int rowIndex, int colIndex)
         {
