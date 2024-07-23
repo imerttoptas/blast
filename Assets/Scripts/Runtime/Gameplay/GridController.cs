@@ -96,7 +96,7 @@ namespace Runtime.Gameplay
             CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
             foreach (var neighbourCell in GetAdjacentCells(cell))
             {
-                if (neighbourCell.GetUnit<Cube>()?.CubeInfo.type == type)
+                if (neighbourCell.IsClickable && neighbourCell.GetUnit<Cube>()?.CubeInfo.type == type)
                 {
                     positions.Add(new Vector2(neighbourCell.RowIndex, neighbourCell.ColIndex));
                 }
@@ -128,45 +128,31 @@ namespace Runtime.Gameplay
             return adjacentCells;
         }
         
-        private HashSet<Cell> FindCellsToPop(Cell cell, bool checkBoxes = true) // Change tuple to Vector2 
+        private HashSet<Cell> FindCellsToPop(Cell cell)
         {
-            CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
-            tempCellHashSet.Clear();
+            var cubeGroup = FindCubeGroup(cell);
             
-            Queue<(int row, int col)> cellsToVisit = new();
-            HashSet<(int row, int col)> visitedCells = new();
-            cellsToVisit.Enqueue((cell.RowIndex, cell.ColIndex));
-            visitedCells.Add((cell.RowIndex, cell.ColIndex));
-            
-            while (cellsToVisit.Count > 0)
+            foreach (var currentCell in cubeGroup.ToList())
             {
-                var (currentRow, currentCol) = cellsToVisit.Dequeue();
-                
-                if (checkBoxes && GetCell(currentRow,currentCol).Unit is IAffectedByNeighbour)
+                if (!currentCell.IsClickable)
                 {
-                    tempCellHashSet.Add(GetCell(currentRow, currentCol));
-                    continue;
+                    cubeGroup.Remove(currentCell);
                 }
-                
-                Cube currentCube = GetCell(currentRow, currentCol)?.GetUnit<Cube>();
-                
-                if (currentCube == null || currentCube.CubeInfo.type != type)
+                CheckNeighbour(currentCell);
+            }
+            
+            return cubeGroup;
+
+            void CheckNeighbour(Cell currentCell)
+            {
+                foreach (var affectedByNeighbourCells in GetAdjacentCells(currentCell))
                 {
-                    continue;
-                }
-                
-                tempCellHashSet.Add(GetCell(currentRow, currentCol));
-                
-                foreach (var adjacentCell in GetAdjacentCells(GetCell(currentRow, currentCol)))
-                {
-                    if (visitedCells.Add((adjacentCell.RowIndex,adjacentCell.ColIndex)))
+                    if (affectedByNeighbourCells.Unit is IAffectedByNeighbour)
                     {
-                        cellsToVisit.Enqueue((adjacentCell.RowIndex, adjacentCell.ColIndex));
+                        cubeGroup.Add(affectedByNeighbourCells);
                     }
                 }
             }
-
-            return tempCellHashSet;
         }
         
         private void BlastMatchGroup(Cell clickedCell)
@@ -216,14 +202,40 @@ namespace Runtime.Gameplay
                     Cell cell = GetCell(i, j);
                     if (cell && !checkedCells.Contains(cell)&& cell.GetUnit<Cube>())
                     {
-                        HashSet<Cell> cubeGroup = FindCellsToPop(cell, false);
+                        HashSet<Cell> cubeGroup = FindCubeGroup(cell);
                         SetCubeGroupState(cubeGroup);
                         checkedCells.UnionWith(cubeGroup);
                     }
                 }
             }
         }
+        
+        private HashSet<Cell> FindCubeGroup(Cell cell)
+        {
+            HashSet<Cell> group = new HashSet<Cell>();
+            HashSet<Vector2> visitedCells = new HashSet<Vector2>();
+            CubeType type = cell.GetUnit<Cube>().CubeInfo.type;
+            
+            FindCubeGroupRecursive(cell, type, visitedCells, group);
+            
+            return group;
+        }
+        
+        private void FindCubeGroupRecursive(Cell cell, CubeType type, HashSet<Vector2> visitedCells, HashSet<Cell> group)
+        {
+            if (cell?.GetUnit<Cube>()?.CubeInfo.type != type || !visitedCells.Add(new Vector2(cell.RowIndex, cell.ColIndex)))
+            {
+                return;
+            }
+            
+            group.Add(cell);
 
+            foreach (var adjacentCell in GetAdjacentCells(cell))
+            {
+                FindCubeGroupRecursive(adjacentCell, type, visitedCells, group);
+            }
+        }
+        
         private void SetCubeGroupState(HashSet<Cell> cells)
         {
             foreach (var cell in cells)
@@ -246,18 +258,32 @@ namespace Runtime.Gameplay
         {
             for (int i = 0; i < dropCount; i++)
             {
-                GetCell(rowCount - dropCount + i, colIndex).Fill(unitSpawner.SpawnNewCube(colIndex, i));
-                tasks.Add(GetCell(rowCount - dropCount + i, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 10f)
+                Cell cell = GetCell(rowCount - dropCount + i, colIndex);
+                cell.IsClickable = false;
+                cell.Fill(unitSpawner.SpawnNewCube(colIndex, i));
+                cell.Unit.transform.DOKill();
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 0.5f)
+                    .OnComplete(
+                        () =>
+                        {
+                            cell.IsClickable = true;
+                        })
                     .SetSpeedBased().ToUniTask());
             }
         }
-
+        
         private void ShiftExistingUnits(int colIndex)
         {
             foreach (var info in GetShiftableUnitsInfo(colIndex).Reverse())
             {
-                GetCell(info.Key - info.Value, colIndex).Fill(GetCell(info.Key, colIndex).RemoveUnit());
-                tasks.Add(GetCell(info.Key - info.Value, colIndex).Unit.transform.DOLocalMove(Vector2.zero, 10f)
+                Cell cell = GetCell(info.Key - info.Value, colIndex);
+                cell.IsClickable = false;
+                cell.Fill(GetCell(info.Key, colIndex).RemoveUnit());
+                cell.Unit.transform.DOKill();
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 0.5f).OnComplete(() =>
+                    {
+                        cell.IsClickable = true;
+                    })
                     .SetSpeedBased().ToUniTask());
             }
         }
@@ -335,14 +361,14 @@ namespace Runtime.Gameplay
             }
             return false;
         }
-
+        
         private async void ShuffleGrid()
         {
             var shuffleUnits = new List<GameUnit>();
             var shuffleCells = new List<Cell>();
             
             int retryCount = 0;
-            while (!CheckValidGrid())
+            while (!CheckValidGrid() && retryCount < 100)
             {
                 shuffleCells.Clear();
                 shuffleUnits.Clear();
@@ -392,6 +418,7 @@ namespace Runtime.Gameplay
             List<UniTask> shuffleTasks = new List<UniTask>();
             foreach (var cell in shuffleCells)
             {
+                cell.Unit.transform.DOKill();
                 shuffleTasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 1f).SetEase(Ease.InOutBack).OnComplete(
                     () =>
                     {
