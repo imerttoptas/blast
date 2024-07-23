@@ -262,7 +262,7 @@ namespace Runtime.Gameplay
                 cell.IsClickable = false;
                 cell.Fill(unitSpawner.SpawnNewCube(colIndex, i));
                 cell.Unit.transform.DOKill();
-                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 0.5f)
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 8f)
                     .OnComplete(
                         () =>
                         {
@@ -280,7 +280,7 @@ namespace Runtime.Gameplay
                 cell.IsClickable = false;
                 cell.Fill(GetCell(info.Key, colIndex).RemoveUnit());
                 cell.Unit.transform.DOKill();
-                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 0.5f).OnComplete(() =>
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 8f).OnComplete(() =>
                     {
                         cell.IsClickable = true;
                     })

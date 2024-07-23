@@ -10,15 +10,31 @@ namespace Runtime.Gameplay
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private List<Sprite> sprites;
         
+        public void Init()
+        {
+            Health = 2;
+            SetState();
+        }
+
         public override void Pop(Action onBlast)
         {
             Health--;
-            spriteRenderer.sprite = sprites[0];
+            SetState();
             if (Health <= 0)
             {
                 onBlast?.Invoke();
-                Destroy(gameObject);
+                ObjectPoolManager.instance.ReturnToPool(gameObject);
             }
+        }
+        
+        private void SetState()
+        {
+            spriteRenderer.sprite = Health switch
+            {
+                1 => sprites[0],
+                2 => sprites[1],
+                _ => spriteRenderer.sprite
+            };
         }
     }
 }

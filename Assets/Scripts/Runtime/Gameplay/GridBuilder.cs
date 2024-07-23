@@ -17,7 +17,7 @@ namespace Runtime.Gameplay
                 for (int colIndex = 0; colIndex < GridController.instance.ColCount; colIndex++)
                 {
                     Vector2 targetPos = startPoint + new Vector2(colIndex, rowIndex);
-                    Cell createdCell = Instantiate(cellPrefab);
+                    Cell createdCell = ObjectPoolManager.instance.Get(PoolObjectType.Cell).GetComponent<Cell>();
                     createdCell.Init(parent: transform, targetPos, Vector2.one, rowIndex, colIndex);
                     grid[rowIndex, colIndex] = createdCell;
                     

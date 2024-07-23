@@ -11,36 +11,36 @@ namespace Runtime.Gameplay
         [SerializeField] private Cube cubePrefab;
         [SerializeField] private List<GameUnitInfo> gameUnitInfoList;
         
-        public void SpawnUnit(GameUnitType unitType)
-        {
-            Instantiate(gameUnitInfoList.Find(x => x.type == unitType).prefab);
-        }
-
         public void SpawnRandomUnit(int row, int col)
         {
-            GameUnit createdUnit = Instantiate(GetRandomGameUnit());
+            GameUnit createdUnit = GetRandomGameUnit();
             createdUnit.transform.localScale = Vector2.one;
-            GridController.instance.GetCell(row, col).Fill(createdUnit);
+            Cell cell = GridController.instance.GetCell(row, col);
+            cell.Fill(createdUnit);
             createdUnit.transform.position = GridController.instance.GetCell(row, col).transform.position;
-            if (GridController.instance.GetCell(row,col).GetUnit<Cube>())
-            {
-                GridController.instance.GetCell(row, col).GetUnit<Cube>()
-                    .Init(cubeTypeCatalogue.GetRandomCubeTypeFromRange());
-            }
+            InitializeUnitOnCell(cell);
         }
-        
-        public void SpawnCubeAt(int row, int col)
+
+        private void InitializeUnitOnCell(Cell cell)
         {
-            Cube createdCube = Instantiate(cubePrefab);
-            createdCube.Init(cubeTypeCatalogue.GetRandomCubeTypeFromRange());
-            createdCube.transform.localScale = Vector2.one;
-            GridController.instance.GetCell(row, col).Fill(createdCube);
-            createdCube.transform.position = GridController.instance.GetCell(row, col).transform.position;
+            switch (cell.Unit.type)
+            {
+                case GameUnitType.Cube:
+                    cell.GetUnit<Cube>().Init(cubeTypeCatalogue.GetRandomCubeTypeFromRange());
+                    break;
+                case GameUnitType.Box:
+                    cell.GetUnit<Box>().Init();
+                    break;
+                case GameUnitType.Default:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
         
         public Cube SpawnNewCube(int colIndex, int index)
         {
-            Cube createdCube = Instantiate(cubePrefab);
+            Cube createdCube = ObjectPoolManager.instance.Get(PoolObjectType.Cube).GetComponent<Cube>();
             createdCube.transform.position =
                 GridController.instance.GetCell(GridController.instance.RowCount - 1, colIndex).transform.position +
                 Vector3.up * ((index + 1) * 2f); // TODO: Change the upValue
@@ -50,7 +50,9 @@ namespace Runtime.Gameplay
 
         private GameUnit GetRandomGameUnit()
         {
-            return Random.Range(0, 1f) < 0.8f ? gameUnitInfoList[0].prefab : gameUnitInfoList[1].prefab;
+            return Random.Range(0, 1f) < 0.8f
+                ? ObjectPoolManager.instance.Get(PoolObjectType.Cube).GetComponent<GameUnit>()
+                : ObjectPoolManager.instance.Get(PoolObjectType.Box).GetComponent<GameUnit>();
         }
         
     }

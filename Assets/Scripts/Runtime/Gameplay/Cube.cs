@@ -21,7 +21,7 @@ namespace Runtime.Gameplay
         public override void Pop(Action onBlast)
         {
             onBlast?.Invoke();
-            Destroy(gameObject);
+            ObjectPoolManager.instance.ReturnToPool(gameObject);
         }
 
         public void SetState(int count)
