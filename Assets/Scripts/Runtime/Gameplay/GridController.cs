@@ -1,9 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Runtime.Gameplay
 {
@@ -32,7 +32,7 @@ namespace Runtime.Gameplay
             inputManager.OnClickedToClickableObject -= TryMakeMove;
         }
         
-        void Start()
+        private void Start()
         {
             gridBuilder.GenerateGrid(grid);
             ArrangeCubeStates();
@@ -182,6 +182,7 @@ namespace Runtime.Gameplay
             }
             
             ShiftGrid(blastGroup);
+   
         }
         
         private async void ShiftGrid(HashSet<Cell> matchGroup)
@@ -199,6 +200,10 @@ namespace Runtime.Gameplay
             
             await UniTask.WhenAll(shiftTasks);
             ArrangeCubeStates();
+            if (!CheckValidGrid())
+            {
+                ShuffleGrid();
+            }
         }
         
         private void ArrangeCubeStates()
@@ -313,6 +318,87 @@ namespace Runtime.Gameplay
             }
             
             return dropCount;
+        }
+        
+        private bool CheckValidGrid()
+        {
+            for (int i = 0; i < RowCount; i++)
+            {
+                for (int j = 0; j < ColCount; j++)
+                {
+                    Cell currentCell = GetCell(i, j);
+                    if (currentCell != null && currentCell.GetUnit<Cube>() && CheckValidMove(currentCell))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private async void ShuffleGrid()
+        {
+            var shuffleUnits = new List<GameUnit>();
+            var shuffleCells = new List<Cell>();
+            
+            int retryCount = 0;
+            while (!CheckValidGrid())
+            {
+                shuffleCells.Clear();
+                shuffleUnits.Clear();
+                GetShuffleCellsAndUnits();
+                ShuffleList(shuffleUnits);
+                for (int i = 0; i < shuffleCells.Count; i++)
+                {
+                    shuffleCells[i].Fill(shuffleUnits[i]);
+                }
+
+                retryCount++;
+            }
+            
+            await ShuffleAnimation(shuffleCells);
+            Debug.Log("Found the valid grid at " + retryCount + " try");
+            return;
+
+            void GetShuffleCellsAndUnits()
+            {
+                for (int i = 0; i < RowCount; i++)
+                {
+                    for (int j = 0; j < ColCount; j++)
+                    {
+                        Cell cell = grid[i, j];
+                        if (cell != null && cell.state != CellState.Empty && cell.Unit is not IFixedUnit)
+                        {
+                            shuffleUnits.Add(cell.RemoveUnit());
+                            shuffleCells.Add(cell);
+                            cell.IsClickable = false;
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void ShuffleList<T>(List<T> list) // TODO: Move to Extensions class.
+        {
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int randomIndex = Random.Range(0, i + 1);
+                (list[i], list[randomIndex]) = (list[randomIndex], list[i]);
+            }
+        }
+
+        private async UniTask ShuffleAnimation(List<Cell> shuffleCells) // TODO: Split shuffle operations and animations
+        {
+            List<UniTask> shuffleTasks = new List<UniTask>();
+            foreach (var cell in shuffleCells)
+            {
+                shuffleTasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 1f).SetEase(Ease.InOutBack).OnComplete(
+                    () =>
+                    {
+                        cell.IsClickable = true;
+                    }).ToUniTask());
+            }
+            await UniTask.WhenAll(shuffleTasks); 
         }
     }
 }
