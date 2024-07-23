@@ -3,7 +3,6 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace Runtime.Gameplay
 {
@@ -373,7 +372,7 @@ namespace Runtime.Gameplay
                 shuffleCells.Clear();
                 shuffleUnits.Clear();
                 GetShuffleCellsAndUnits();
-                ShuffleList(shuffleUnits);
+                shuffleUnits.Shuffle();
                 for (int i = 0; i < shuffleCells.Count; i++)
                 {
                     shuffleCells[i].Fill(shuffleUnits[i]);
@@ -401,15 +400,6 @@ namespace Runtime.Gameplay
                         }
                     }
                 }
-            }
-        }
-        
-        private void ShuffleList<T>(List<T> list) // TODO: Move to Extensions class.
-        {
-            for (int i = list.Count - 1; i > 0; i--)
-            {
-                int randomIndex = Random.Range(0, i + 1);
-                (list[i], list[randomIndex]) = (list[randomIndex], list[i]);
             }
         }
 
