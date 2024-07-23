@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e31f98034484094974918c6b4e70bc, type: 3}
   m_Name: Yellow
   m_EditorClassIdentifier: 
-  type: 6
+  type: 5
   defaultSprite: {fileID: -1324773552, guid: 2dc98ac4821a2494eb1c489fad551d3e, type: 3}
   cubeSpriteList:
   - {fileID: -1137077433, guid: 36d71e44a10ce4c74ba36b823882e7d0, type: 3}

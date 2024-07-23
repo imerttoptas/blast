@@ -17,7 +17,7 @@ namespace Runtime.Gameplay
         
         public CubeType GetRandomCubeType()
         {
-            return cubeTypes[Random.Range(0, cubeTypes.Count)];
+            return cubeTypes[Random.Range(0, cubeTypes.Count - 1)];
         }
     }
 }
