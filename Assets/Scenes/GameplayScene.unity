@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be502a5061a8c409f88fd953ebb1470e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubeTypeCatalogue: {fileID: 11400000, guid: e68374b3a485244f5b8e7b10a64ac631, type: 2}
+  cubeInfoCatalogue: {fileID: 11400000, guid: e68374b3a485244f5b8e7b10a64ac631, type: 2}
   cubePrefab: {fileID: 7380928115427342865, guid: d320ac233500840fe8982efb1f55d6c6, type: 3}
   gameUnitInfoList:
   - type: 1
@@ -311,7 +311,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitSpawner: {fileID: 492071507}
   cellPrefab: {fileID: 4515798152927028175, guid: 09131f88ff0384fba96e28882e972b7b, type: 3}
-  colorCount: 6
 --- !u!1 &1202913988
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,6 +404,7 @@ MonoBehaviour:
   unitSpawner: {fileID: 492071507}
   gridBuilder: {fileID: 1091369493}
   inputManager: {fileID: 1202913990}
+  boardInfo: {fileID: 11400000, guid: ab111bc729a4441aebb535ca0003f891, type: 2}
   rowCount: 6
   columnCount: 6
 --- !u!1 &2142078976

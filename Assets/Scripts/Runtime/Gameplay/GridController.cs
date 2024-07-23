@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Runtime.Utilities;
 using UnityEngine;
 
 namespace Runtime.Gameplay
@@ -11,15 +12,14 @@ namespace Runtime.Gameplay
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private GridBuilder gridBuilder;
         [SerializeField] private InputManager inputManager;
-        
+        [SerializeField] public CustomBoardInfo boardInfo;
+
         private HashSet<Cell> tempCellHashSet = new();
         private List<UniTask> tasks = new();
 
         private Cell[,] grid = new Cell[12, 12];
-        [SerializeField] private int rowCount;
-        [SerializeField] private int columnCount;
-        public int RowCount => rowCount;
-        public int ColCount => columnCount;
+        public int RowCount => boardInfo.rowCount;
+        public int ColCount => boardInfo.colCount;
         
         private void OnEnable()
         {
@@ -33,13 +33,13 @@ namespace Runtime.Gameplay
         
         private void Start()
         {
-            gridBuilder.GenerateGrid(grid);
+            gridBuilder.GenerateGrid(grid, boardInfo);
             ArrangeCubeStates();
         }
         
         public Cell GetCell(int row, int col)
         {
-            if (row >= 0 && row < rowCount && col >= 0 && col < columnCount)
+            if (row >= 0 && row < RowCount && col >= 0 && col < ColCount)
             {
                 return grid[row, col];
             }
@@ -50,7 +50,7 @@ namespace Runtime.Gameplay
         {
             tempCellHashSet.Clear();
     
-            for (int i = 0; i < rowCount; i++)
+            for (int i = 0; i < RowCount; i++)
             {
                 tempCellHashSet.Add(GetCell(i, colIndex));
             }
@@ -62,7 +62,7 @@ namespace Runtime.Gameplay
         {
             tempCellHashSet.Clear();
     
-            for (int i = 0; i < columnCount; i++)
+            for (int i = 0; i < ColCount; i++)
             {
                 tempCellHashSet.Add(GetCell(rowIndex, i));
             }
@@ -257,11 +257,11 @@ namespace Runtime.Gameplay
         {
             for (int i = 0; i < dropCount; i++)
             {
-                Cell cell = GetCell(rowCount - dropCount + i, colIndex);
+                Cell cell = GetCell(RowCount - dropCount + i, colIndex);
                 cell.IsClickable = false;
                 cell.Fill(unitSpawner.SpawnNewCube(colIndex, i));
                 cell.Unit.transform.DOKill();
-                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 8f)
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, Constants.SHIFT_ANIMATION_SPEED)
                     .OnComplete(
                         () =>
                         {
@@ -279,7 +279,7 @@ namespace Runtime.Gameplay
                 cell.IsClickable = false;
                 cell.Fill(GetCell(info.Key, colIndex).RemoveUnit());
                 cell.Unit.transform.DOKill();
-                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 8f).OnComplete(() =>
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, Constants.SHIFT_ANIMATION_SPEED).OnComplete(() =>
                     {
                         cell.IsClickable = true;
                     })
@@ -289,7 +289,7 @@ namespace Runtime.Gameplay
         
         private Dictionary<int, int> GetShiftableUnitsInfo(int colIndex)
         {
-            Dictionary<int, int> cellShiftInfo = new(columnCount);
+            Dictionary<int, int> cellShiftInfo = new(ColCount);
             
             for (int i = RowCount - 1; i > 0 ; i--)
             {
@@ -330,7 +330,7 @@ namespace Runtime.Gameplay
         {
             int dropCount = 0;
             
-            for (int i = rowCount -1 ; i > -1; i--)
+            for (int i = RowCount -1 ; i > -1; i--)
             {
                 if (GetCell(i,colIndex)?.Unit is IFixedUnit)
                 {
@@ -409,7 +409,7 @@ namespace Runtime.Gameplay
             foreach (var cell in shuffleCells)
             {
                 cell.Unit.transform.DOKill();
-                shuffleTasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, 1f).SetEase(Ease.InOutBack).OnComplete(
+                shuffleTasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, Constants.SHUFFLE_ANIMATION_DURATION).SetEase(Ease.InOutBack).OnComplete(
                     () =>
                     {
                         cell.IsClickable = true;

@@ -39,12 +39,11 @@ namespace Runtime.Gameplay
     
     public enum CubeType
     {
-        Empty = 0,
-        Blue = 1,
-        Green = 2,
-        Pink = 3,
-        Purple = 4,
-        Red = 5,
-        Yellow = 6,
+        Blue = 0,
+        Green = 1,
+        Pink = 2,
+        Purple = 3,
+        Red = 4,
+        Yellow = 5
     }
 }

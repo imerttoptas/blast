@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Runtime.Utilities;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -7,7 +8,7 @@ namespace Runtime.Gameplay
 {
     public class UnitSpawner : MonoBehaviour
     {
-        [SerializeField] private CubeTypeCatalogue cubeTypeCatalogue;
+        [SerializeField] private CubeInfoCatalogue cubeInfoCatalogue;
         [SerializeField] private Cube cubePrefab;
         [SerializeField] private List<GameUnitInfo> gameUnitInfoList;
         
@@ -26,7 +27,9 @@ namespace Runtime.Gameplay
             switch (cell.Unit.type)
             {
                 case GameUnitType.Cube:
-                    cell.GetUnit<Cube>().Init(cubeTypeCatalogue.GetRandomCubeTypeFromRange());
+                    cell.GetUnit<Cube>()
+                        .Init(
+                            cubeInfoCatalogue.GetCubeInfoOfType(GridController.instance.boardInfo.GetRandomCubeType()));
                     break;
                 case GameUnitType.Box:
                     cell.GetUnit<Box>().Init();
@@ -43,16 +46,17 @@ namespace Runtime.Gameplay
             Cube createdCube = ObjectPoolManager.instance.Get(PoolObjectType.Cube).GetComponent<Cube>();
             createdCube.transform.position =
                 GridController.instance.GetCell(GridController.instance.RowCount - 1, colIndex).transform.position +
-                Vector3.up * ((index + 1) * 2f); // TODO: Change the upValue
-            createdCube.Init(cubeTypeCatalogue.GetRandomCubeTypeFromRange());
+                Vector3.up * ((index + 1) * Constants.CUBE_SPAWN_UP_VALUE);
+            createdCube.Init(
+                cubeInfoCatalogue.GetCubeInfoOfType(GridController.instance.boardInfo.GetRandomCubeType()));
             return createdCube;
         }
 
         private GameUnit GetRandomGameUnit()
         {
-            return Random.Range(0, 1f) < 0.8f
-                ? ObjectPoolManager.instance.Get(PoolObjectType.Cube).GetComponent<GameUnit>()
-                : ObjectPoolManager.instance.Get(PoolObjectType.Box).GetComponent<GameUnit>();
+            return Random.Range(0, 1f) < Constants.BOX_PROBABILITY
+                ? ObjectPoolManager.instance.Get(PoolObjectType.Box).GetComponent<GameUnit>()
+                : ObjectPoolManager.instance.Get(PoolObjectType.Cube).GetComponent<GameUnit>();
         }
         
     }
