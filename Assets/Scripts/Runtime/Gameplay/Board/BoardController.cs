@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
@@ -12,14 +13,14 @@ namespace Runtime.Gameplay.Board
     public class BoardController : Singleton<BoardController>
     {
         [SerializeField] private UnitSpawner unitSpawner;
-        [FormerlySerializedAs("gridBuilder")] [SerializeField] private BoardBuilder boardBuilder;
+        [SerializeField] private BoardBuilder boardBuilder;
         [SerializeField] private InputManager inputManager;
         [SerializeField] public CustomBoardInfo boardInfo;
 
         private HashSet<Cell> tempCellHashSet = new();
         private List<UniTask> tasks = new();
 
-        private Cell[,] grid = new Cell[12, 12];
+        private Cell[,] board = new Cell[12, 12];
         public int RowCount => boardInfo.rowCount;
         public int ColCount => boardInfo.colCount;
         
@@ -35,19 +36,19 @@ namespace Runtime.Gameplay.Board
         
         private void Start()
         {
-            boardBuilder.GenerateGrid(grid, boardInfo);
-            ArrangeCubeStates();
+            boardBuilder.GenerateBoard(board, boardInfo);
+            ArrangeCubeGroups();
         }
         
         public Cell GetCell(int row, int col)
         {
             if (row >= 0 && row < RowCount && col >= 0 && col < ColCount)
             {
-                return grid[row, col];
+                return board[row, col];
             }
             return null;
         }
-    
+        
         public HashSet<Cell> GetColumn(int colIndex)
         {
             tempCellHashSet.Clear();
@@ -168,11 +169,11 @@ namespace Runtime.Gameplay.Board
                 });
             }
             
-            ShiftGrid(blastGroup);
+            ShiftBoard(blastGroup);
    
         }
         
-        private async void ShiftGrid(HashSet<Cell> matchGroup)
+        private async void ShiftBoard(HashSet<Cell> matchGroup)
         {
             HashSet<int> colIndexes = new HashSet<int>();
             List<UniTask> shiftTasks = new();
@@ -186,14 +187,14 @@ namespace Runtime.Gameplay.Board
             }
             
             await UniTask.WhenAll(shiftTasks);
-            ArrangeCubeStates();
-            if (!CheckValidGrid())
+            ArrangeCubeGroups();
+            if (!CheckValidBoard())
             {
-                ShuffleGrid();
+                ShuffleBoard();
             }
         }
         
-        private void ArrangeCubeStates()
+        private void ArrangeCubeGroups()
         {
             HashSet<Cell> checkedCells = new HashSet<Cell>();
             for (int i = 0; i < RowCount; i++)
@@ -347,7 +348,7 @@ namespace Runtime.Gameplay.Board
             return dropCount;
         }
         
-        private bool CheckValidGrid()
+        private bool CheckValidBoard()
         {
             for (int i = 0; i < RowCount; i++)
             {
@@ -363,40 +364,78 @@ namespace Runtime.Gameplay.Board
             return false;
         }
         
-        private async void ShuffleGrid()
+        private async void ShuffleBoard()
         {
-            var shuffleUnits = new List<GameUnit>();
+            var shuffleUnits = new List<Cube>();
             var shuffleCells = new List<Cell>();
             
-            int retryCount = 0;
-            while (!CheckValidGrid() && retryCount < 100)
+            GetUnitsAndCellsToShuffle();
+            shuffleUnits.Shuffle();
+            for (int i = 0; i < shuffleCells.Count; i++)
             {
-                shuffleCells.Clear();
-                shuffleUnits.Clear();
-                GetShuffleCellsAndUnits();
-                shuffleUnits.Shuffle();
-                for (int i = 0; i < shuffleCells.Count; i++)
-                {
-                    shuffleCells[i].Fill(shuffleUnits[i]);
-                }
-
-                retryCount++;
+                shuffleCells[i].Fill(shuffleUnits[i]);
+            }
+            if (!CheckValidBoard())
+            {
+                PlaceTheShuffledBoard();
             }
             
             await ShuffleAnimation(shuffleCells);
-            Debug.Log("Found the valid grid at " + retryCount + " try");
             return;
+            
+            void PlaceTheShuffledBoard()
+            {
+                shuffleCells[0].Fill(shuffleUnits[0]);
+                shuffleUnits.RemoveAt(0);
+                
+                for (int i = 1; i < shuffleCells.Count; i++)
+                {
+                    bool placed = false;
 
-            void GetShuffleCellsAndUnits()
+                    for (int j = 0; j < shuffleUnits.Count; j++)
+                    {
+                        var currentCell = shuffleCells[i];
+                        var previousCell = shuffleCells[i - 1];
+
+                        bool isNeighbourSame = false;
+                        if (CheckCellsNeighbour(currentCell,previousCell))
+                        {
+                            isNeighbourSame = shuffleUnits[j].CubeInfo.type ==
+                                              previousCell.GetUnit<Cube>().CubeInfo.type;
+                        }
+
+                        if (isNeighbourSame || i == 1)
+                        {
+                            shuffleCells[i].Fill(shuffleUnits[j]);
+                            shuffleUnits.RemoveAt(j);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed && shuffleUnits.Count > 0)
+                    {
+                        shuffleCells[i].Fill(shuffleUnits[0]);
+                        shuffleUnits.RemoveAt(0);
+                    }
+                }
+        
+                bool CheckCellsNeighbour(Cell cell1, Cell cell2)
+                {
+                    return (cell1.RowIndex == cell2.RowIndex && Math.Abs(cell1.ColIndex - cell2.ColIndex) == 1) ||
+                           (cell1.ColIndex == cell2.ColIndex && Math.Abs(cell1.RowIndex - cell2.RowIndex) == 1);
+                }
+            }
+            void GetUnitsAndCellsToShuffle()
             {
                 for (int i = 0; i < RowCount; i++)
                 {
                     for (int j = 0; j < ColCount; j++)
                     {
-                        Cell cell = grid[i, j];
+                        Cell cell = board[i, j];
                         if (cell != null && cell.state != CellState.Empty && cell.Unit is not IFixedUnit)
                         {
-                            shuffleUnits.Add(cell.RemoveUnit());
+                            shuffleUnits.Add(cell.GetUnit<Cube>());
                             shuffleCells.Add(cell);
                             cell.IsClickable = false;
                         }
@@ -404,7 +443,7 @@ namespace Runtime.Gameplay.Board
                 }
             }
         }
-
+        
         private async UniTask ShuffleAnimation(List<Cell> shuffleCells) // TODO: Split shuffle operations and animations
         {
             List<UniTask> shuffleTasks = new List<UniTask>();
