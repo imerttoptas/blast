@@ -1,8 +1,8 @@
 using System;
-using Unity.VisualScripting;
+using Runtime.Gameplay.Pooling;
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Units
 {
     public class Cube : GameUnit , IShiftable
     {

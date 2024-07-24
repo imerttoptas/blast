@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Units
 {
     [CreateAssetMenu(fileName = "New Cube Info Catalog", menuName = "Cube Info Catalog")]
     public class CubeInfoCatalogue : ScriptableObject

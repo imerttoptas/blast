@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using Runtime.Gameplay.Units;
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Board
 {
     [CreateAssetMenu(fileName = "New Board Info", menuName = "Board Info")]
     public class CustomBoardInfo : ScriptableObject

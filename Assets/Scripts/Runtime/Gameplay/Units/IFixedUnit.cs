@@ -1,4 +1,4 @@
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Units
 {
     public interface IFixedUnit
     {

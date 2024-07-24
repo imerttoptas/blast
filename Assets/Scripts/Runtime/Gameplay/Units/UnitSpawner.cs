@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Runtime.Gameplay.Board;
+using Runtime.Gameplay.Pooling;
 using Runtime.Utilities;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Units
 {
     public class UnitSpawner : MonoBehaviour
     {
@@ -16,9 +18,9 @@ namespace Runtime.Gameplay
         {
             GameUnit createdUnit = GetRandomGameUnit();
             createdUnit.transform.localScale = Vector2.one;
-            Cell cell = GridController.instance.GetCell(row, col);
+            Cell cell = BoardController.instance.GetCell(row, col);
             cell.Fill(createdUnit);
-            createdUnit.transform.position = GridController.instance.GetCell(row, col).transform.position;
+            createdUnit.transform.position = BoardController.instance.GetCell(row, col).transform.position;
             InitializeUnitOnCell(cell);
         }
 
@@ -29,7 +31,7 @@ namespace Runtime.Gameplay
                 case GameUnitType.Cube:
                     cell.GetUnit<Cube>()
                         .Init(
-                            cubeInfoCatalogue.GetCubeInfoOfType(GridController.instance.boardInfo.GetRandomCubeType()));
+                            cubeInfoCatalogue.GetCubeInfoOfType(BoardController.instance.boardInfo.GetRandomCubeType()));
                     break;
                 case GameUnitType.Box:
                     cell.GetUnit<Box>().Init();
@@ -45,10 +47,10 @@ namespace Runtime.Gameplay
         {
             Cube createdCube = ObjectPoolManager.instance.Get(PoolObjectType.Cube).GetComponent<Cube>();
             createdCube.transform.position =
-                GridController.instance.GetCell(GridController.instance.RowCount - 1, colIndex).transform.position +
+                BoardController.instance.GetCell(BoardController.instance.RowCount - 1, colIndex).transform.position +
                 Vector3.up * ((index + 1) * Constants.CUBE_SPAWN_UP_VALUE);
             createdCube.Init(
-                cubeInfoCatalogue.GetCubeInfoOfType(GridController.instance.boardInfo.GetRandomCubeType()));
+                cubeInfoCatalogue.GetCubeInfoOfType(BoardController.instance.boardInfo.GetRandomCubeType()));
             return createdCube;
         }
 

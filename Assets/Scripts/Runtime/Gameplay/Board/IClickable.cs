@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Board
 {
     public interface IClickable
     {

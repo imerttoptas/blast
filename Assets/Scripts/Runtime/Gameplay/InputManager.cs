@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Runtime.Gameplay.Board;
 using UnityEngine;
 
 namespace Runtime.Gameplay

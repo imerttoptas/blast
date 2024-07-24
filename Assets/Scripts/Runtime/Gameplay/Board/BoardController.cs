@@ -2,15 +2,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Runtime.Gameplay.Units;
 using Runtime.Utilities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Board
 {
-    public class GridController : Singleton<GridController>
+    public class BoardController : Singleton<BoardController>
     {
         [SerializeField] private UnitSpawner unitSpawner;
-        [SerializeField] private GridBuilder gridBuilder;
+        [FormerlySerializedAs("gridBuilder")] [SerializeField] private BoardBuilder boardBuilder;
         [SerializeField] private InputManager inputManager;
         [SerializeField] public CustomBoardInfo boardInfo;
 
@@ -33,7 +35,7 @@ namespace Runtime.Gameplay
         
         private void Start()
         {
-            gridBuilder.GenerateGrid(grid, boardInfo);
+            boardBuilder.GenerateGrid(grid, boardInfo);
             ArrangeCubeStates();
         }
         

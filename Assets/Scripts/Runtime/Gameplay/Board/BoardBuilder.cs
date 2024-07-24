@@ -1,8 +1,10 @@
+using Runtime.Gameplay.Pooling;
+using Runtime.Gameplay.Units;
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Board
 {
-    public class GridBuilder : MonoBehaviour
+    public class BoardBuilder : MonoBehaviour
     {
         [SerializeField] private UnitSpawner unitSpawner;
         [SerializeField] private Cell cellPrefab;

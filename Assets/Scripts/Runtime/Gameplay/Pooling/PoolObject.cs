@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Pooling
 {
     public class PoolObject : MonoBehaviour
     {

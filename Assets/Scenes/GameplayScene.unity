@@ -276,7 +276,7 @@ GameObject:
   - component: {fileID: 1091369492}
   - component: {fileID: 1091369493}
   m_Layer: 0
-  m_Name: GridBuilder
+  m_Name: BoardBuilder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -367,7 +367,7 @@ GameObject:
   - component: {fileID: 1547741964}
   - component: {fileID: 1547741965}
   m_Layer: 0
-  m_Name: GridController
+  m_Name: BoardController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -402,11 +402,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isPersistant: 1
   unitSpawner: {fileID: 492071507}
-  gridBuilder: {fileID: 1091369493}
+  boardBuilder: {fileID: 1091369493}
   inputManager: {fileID: 1202913990}
   boardInfo: {fileID: 11400000, guid: ab111bc729a4441aebb535ca0003f891, type: 2}
-  rowCount: 6
-  columnCount: 6
 --- !u!1 &2142078976
 GameObject:
   m_ObjectHideFlags: 0

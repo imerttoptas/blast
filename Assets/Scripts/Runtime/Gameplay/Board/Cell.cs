@@ -1,6 +1,7 @@
+using Runtime.Gameplay.Units;
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Board
 {
     public class Cell : MonoBehaviour , IClickable
     {

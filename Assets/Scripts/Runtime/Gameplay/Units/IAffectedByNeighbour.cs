@@ -1,7 +1,4 @@
-using System;
-using UnityEngine;
-
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Units
 {
     public interface IAffectedByNeighbour
     {
