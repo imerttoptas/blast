@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Runtime.Gameplay.Input;
 using Runtime.Gameplay.Units;
 using Runtime.Utilities;
 using UnityEngine;
@@ -264,7 +265,7 @@ namespace Runtime.Gameplay.Board
                 cell.IsClickable = false;
                 cell.Fill(unitSpawner.SpawnNewCube(colIndex, i));
                 cell.Unit.transform.DOKill();
-                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, Constants.SHIFT_ANIMATION_SPEED)
+                tasks.Add(cell.Unit.transform.DOLocalMove(Vector2.zero, Constants.SPAWN_NEW_UNIT_ANIMATION_SPEED)
                     .OnComplete(
                         () =>
                         {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Runtime.Gameplay.Board;
 using UnityEngine;
 
-namespace Runtime.Gameplay
+namespace Runtime.Gameplay.Input
 {
     public class InputManager : MonoBehaviour
     {
@@ -15,7 +15,7 @@ namespace Runtime.Gameplay
 
         void Update()
         {
-            if (Input.GetMouseButtonUp(0))
+            if (UnityEngine.Input.GetMouseButtonUp(0))
             {
                 IClickable clickedObject = TryGetClickedObject();
 
@@ -31,7 +31,7 @@ namespace Runtime.Gameplay
         
         private IClickable TryGetClickedObject()
         {
-            RaycastHit2D hit = Physics2D.Raycast(cam.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+            RaycastHit2D hit = Physics2D.Raycast(cam.ScreenToWorldPoint(UnityEngine.Input.mousePosition), Vector2.zero);
             
             if (hit.collider != null && hit.collider.TryGetComponent(out IClickable clickedObject))
             {
@@ -46,7 +46,7 @@ namespace Runtime.Gameplay
         
         private IClickable TryGetClosestObjectInACircle(float inputCircleRadius)
         {
-            Vector2 mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 mousePos = cam.ScreenToWorldPoint(UnityEngine.Input.mousePosition);
             int count = Physics2D.CircleCastNonAlloc(mousePos, inputCircleRadius, Vector2.zero, hits);
             
             if (count > 0)
