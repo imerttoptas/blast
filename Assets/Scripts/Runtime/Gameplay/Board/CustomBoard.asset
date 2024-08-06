@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 649eeb92a597846bfaed625243070a0d, type: 3}
   m_Name: CustomBoard
   m_EditorClassIdentifier: 
-  rowCount: 3
-  colCount: 3
+  rowCount: 6
+  colCount: 6
   cubeTypes: 000000000100000002000000030000000400000005000000
